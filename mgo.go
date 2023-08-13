@@ -205,11 +205,7 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		})
 	}
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
-	dialer, err := requests.NewDail(ctx, requests.DialOption{})
-	if err != nil {
-		return nil, err
-	}
-	mgoDialer.dialer = dialer.Dialer()
+	mgoDialer.dialer = requests.NewDail(ctx, requests.DialOption{}).Dialer()
 	client_option.SetDialer(mgoDialer)
 	client_option.SetDirect(opt.Direct)
 	client_option.SetDisableOCSPEndpointCheck(true)
