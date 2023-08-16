@@ -593,15 +593,23 @@ func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context
 		},
 	})
 	defer pool.Close()
-	afterTime := time.NewTimer(0)
-	defer afterTime.Stop()
+	var afterTime *time.Timer
+	defer func() {
+		if afterTime != nil {
+			afterTime.Stop()
+		}
+	}()
 	for datas.Next(pre_ctx) {
 		data := ClearOplog(datas.Map())
 		if data.ObjectID.IsZero() {
 			continue
 		}
 		for taskMap.Has(data.ObjectID) {
-			afterTime.Reset(time.Second)
+			if afterTime == nil {
+				afterTime = time.NewTimer(time.Second)
+			} else {
+				afterTime.Reset(time.Second)
+			}
 			select {
 			case <-pool.Done():
 				return pool.Err()
