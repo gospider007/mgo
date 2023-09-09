@@ -75,7 +75,7 @@ type Timestamp = primitive.Timestamp            //{T uint32   I uint32}
 var ObjectIDFromHex = primitive.ObjectIDFromHex //十六进制字符串转objectId
 var NewObjectID = primitive.NewObjectID         //创建一个新的objectid
 
-func (obj *FindData) Data() map[string]any {
+func (obj *FindData) Map() map[string]any {
 	if obj.raw == nil {
 		raw := map[string]any{}
 		obj.object.Decode(&raw)
@@ -96,7 +96,7 @@ func (obj *FindData) Decode(val any) error {
 
 // 返回gjson
 func (obj *FindData) Json() (gjson.Result, error) {
-	return tools.Any2json(obj.Data())
+	return tools.Any2json(obj.Map())
 }
 
 // 返回json
@@ -554,7 +554,7 @@ func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context
 			return err
 		}
 		if syncData != nil {
-			clearOption.Oid = syncData.Data()["oid"].(Timestamp)
+			clearOption.Oid = syncData.Map()["oid"].(Timestamp)
 		}
 	}
 	obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
@@ -673,18 +673,18 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			return err
 		}
 		if syncData != nil {
-			clearOption.Oid = syncData.Data()["oid"].(ObjectID)
+			clearOption.Oid = syncData.Map()["oid"].(ObjectID)
 			var CurAny any
 			var TotalAny any
 			if clearOption.Desc {
-				CurAny, CurOk = syncData.Data()[curTitle]
+				CurAny, CurOk = syncData.Map()[curTitle]
 			} else {
-				CurAny, CurOk = syncData.Data()[curTitle]
+				CurAny, CurOk = syncData.Map()[curTitle]
 			}
 			if CurOk {
 				barCur = CurAny.(int64)
 			}
-			TotalAny, TotalOk = syncData.Data()["total"]
+			TotalAny, TotalOk = syncData.Map()["total"]
 			if TotalOk {
 				barTotal = TotalAny.(int64)
 			}
