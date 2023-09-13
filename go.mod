@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	gitee.com/baixudong/bar v0.0.0-20230814072341-e111c30a1386
 	gitee.com/baixudong/kinds v0.0.0-20230809033013-c3d6d3479f8c
-	gitee.com/baixudong/requests v0.0.0-20230909010428-6e8ec47a897f
+	gitee.com/baixudong/requests v0.0.0-20230913035344-d28a6d30b6c0
 	gitee.com/baixudong/thread v0.0.0-20230816024758-36a0eb918f78
 	gitee.com/baixudong/tools v0.0.0-20230905085451-d080a77e3eb5
 	github.com/tidwall/gjson v1.16.0

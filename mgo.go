@@ -2,7 +2,6 @@ package mgo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
@@ -25,12 +24,7 @@ var ErrNoDocuments = mongo.ErrNoDocuments
 
 // mongodb 的操作========================================================================== start
 type Client struct {
-	object *mongo.Client
-}
-
-// 集合
-type Table struct {
-	object *mongo.Collection
+	client *mongo.Client
 }
 
 type FindOption struct {
@@ -87,31 +81,24 @@ func (obj *FindData) Map() map[string]any {
 
 // 使用json.Unmarshal 解码
 func (obj *FindData) Decode(val any) error {
-	con, err := obj.Bytes()
-	if err != nil {
-		return err
-	}
-	return tools.JsonUnMarshal(con, val)
+	return tools.Any2struct(obj.Map(), val)
 }
 
 // 返回gjson
-func (obj *FindData) Json() (gjson.Result, error) {
-	return tools.Any2json(obj.Map())
+func (obj *FindData) Json() gjson.Result {
+	result, _ := tools.Any2json(obj.Map())
+	return result
 }
 
 // 返回json
-func (obj *FindData) String() (string, error) {
-	jsonData, err := obj.Json()
-	return jsonData.Raw, err
+func (obj *FindData) String() string {
+	return tools.BytesToString(obj.Bytes())
 }
 
 // 返回字节
-func (obj *FindData) Bytes() ([]byte, error) {
-	con, err := obj.String()
-	if err != nil {
-		return nil, err
-	}
-	return tools.StringToBytes(con), nil
+func (obj *FindData) Bytes() []byte {
+	con, _ := tools.JsonMarshal(obj.Map())
+	return con
 }
 
 // 重试
@@ -146,8 +133,9 @@ func (obj *FindsData) Len() int {
 }
 
 // 返回gjson
-func (obj *FindsData) Json() (gjson.Result, error) {
-	return tools.Any2json(obj.Map())
+func (obj *FindsData) Json() gjson.Result {
+	result, _ := tools.Any2json(obj.Map())
+	return result
 }
 
 func (obj *FindsData) Map() map[string]any {
@@ -163,11 +151,18 @@ func (obj *FindsData) Map() map[string]any {
 
 // 使用json.Unmarshal 解码
 func (obj *FindsData) Decode(val any) error {
-	jsonData, err := obj.Json()
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal([]byte(jsonData.Raw), val)
+	return tools.Any2struct(obj.Map(), val)
+}
+
+// 返回json
+func (obj *FindsData) String() string {
+	return tools.BytesToString(obj.Bytes())
+}
+
+// 返回字节
+func (obj *FindsData) Bytes() []byte {
+	con, _ := tools.JsonMarshal(obj.Map())
+	return con
 }
 
 type mgoDialer struct {
@@ -197,52 +192,87 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		opt.Port = 27017
 	}
 	uri := fmt.Sprintf("mongodb://%s:%d", opt.Host, opt.Port)
-	client_option := options.Client().ApplyURI(uri)
+	httpClient, err := requests.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	clientOption := &options.ClientOptions{
+		HTTPClient: httpClient.HttpClient(),
+		BSONOptions: &options.BSONOptions{
+			UseJSONStructTags: true,
+		},
+	}
+	clientOption.ApplyURI(uri)
 	if opt.Usr != "" && opt.Pwd != "" {
-		client_option.SetAuth(options.Credential{
+		clientOption.SetAuth(options.Credential{
 			Username: opt.Usr,
 			Password: opt.Pwd,
 		})
 	}
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
 	mgoDialer.dialer = requests.NewDail(ctx, requests.DialOption{}).Dialer()
-	client_option.SetDialer(mgoDialer)
-	client_option.SetDirect(opt.Direct)
-	client_option.SetDisableOCSPEndpointCheck(true)
-	client_option.SetRetryReads(true)
-	client_option.SetRetryWrites(true)
+	clientOption.SetDialer(mgoDialer)
+	clientOption.SetDirect(opt.Direct)
+	clientOption.SetDisableOCSPEndpointCheck(true)
+	clientOption.SetRetryReads(true)
+	clientOption.SetRetryWrites(true)
 
-	client, err := mongo.Connect(ctx, client_option)
+	client, err := mongo.Connect(ctx, clientOption)
 	if err != nil {
 		return nil, err
 	}
 	return &Client{client}, client.Ping(ctx, readpref.Primary())
 }
 
+type Db struct {
+	db   *mongo.Database
+	name string
+}
+
+// 集合
+type Table struct {
+	db     *Db
+	table  *mongo.Collection
+	dbName string
+	name   string
+}
+
+// 创建新的集合
+func (obj *Client) NewDb(dbName string) *Db {
+	return &Db{db: obj.client.Database(dbName), name: dbName}
+}
+func (obj *Db) NewTable(tableName string) *Table {
+	return &Table{db: obj, table: obj.db.Collection(tableName), dbName: obj.name, name: tableName}
+}
+func (obj *Db) Tables(ctx context.Context) ([]string, error) {
+	return obj.db.ListCollectionNames(ctx, map[string]string{})
+}
+
 // 创建新的集合
 func (obj *Client) NewTable(dbName string, tableName string) *Table {
-	return &Table{obj.object.Database(dbName).Collection(tableName)}
-}
-func (obj *Client) Dbs(ctx context.Context) ([]string, error) {
-	return obj.object.ListDatabaseNames(ctx, map[string]string{})
-}
-
-// 数据库名称
-func (obj *Table) Tables(ctx context.Context) ([]string, error) {
-	return obj.object.Database().ListCollectionNames(ctx, map[string]string{})
-}
-func (obj *Table) DbName() string {
-	return obj.object.Database().Name()
-}
-
-// 集合名称
-func (obj *Table) TableName() string {
-	return obj.object.Name()
+	return obj.NewDb(dbName).NewTable(tableName)
 }
 
 // 创建新的集合
 func (obj *Table) NewTable(tableName string) *Table {
-	return &Table{obj.object.Database().Collection(tableName)}
+	return obj.db.NewTable(tableName)
+}
+func (obj *Client) Dbs(ctx context.Context) ([]string, error) {
+	return obj.client.ListDatabaseNames(ctx, map[string]string{})
+}
+
+func (obj *Table) DbName() string {
+	return obj.dbName
+}
+
+func (obj *Db) Name() string {
+	return obj.name
+}
+
+// 集合名称
+func (obj *Table) Name() string {
+	return obj.name
 }
 
 // findone
@@ -264,7 +294,7 @@ func (obj *Table) Find(pre_ctx context.Context, filter any, opts ...FindOption) 
 		tot := opt.Timeout
 		mongo_op.MaxTime = &tot
 	}
-	rs := obj.object.FindOne(pre_ctx, filter, &mongo_op)
+	rs := obj.table.FindOne(pre_ctx, filter, &mongo_op)
 	if rs.Err() == ErrNoDocuments {
 		return nil, nil
 	}
@@ -320,8 +350,8 @@ func (obj *Table) Finds(pre_ctx context.Context, filter any, opts ...FindOption)
 		tot := opt.Timeout
 		mongo_op.MaxTime = &tot
 	}
-	rs, err := obj.object.Find(pre_ctx, filter, &mongo_op)
-	return &FindsData{cursor: rs, filter: filter, mongoOp: &mongo_op, object: obj.object}, err
+	rs, err := obj.table.Find(pre_ctx, filter, &mongo_op)
+	return &FindsData{cursor: rs, filter: filter, mongoOp: &mongo_op, object: obj.table}, err
 }
 
 // 集合数量
@@ -336,7 +366,7 @@ func (obj *Table) Count(pre_ctx context.Context, filter any, opts ...FindOption)
 			tot := opt.Timeout
 			mongo_op.MaxTime = &tot
 		}
-		return obj.object.EstimatedDocumentCount(pre_ctx, &mongo_op)
+		return obj.table.EstimatedDocumentCount(pre_ctx, &mongo_op)
 	}
 	mongo_op := options.CountOptions{}
 	if opt.Timeout != 0 {
@@ -349,13 +379,13 @@ func (obj *Table) Count(pre_ctx context.Context, filter any, opts ...FindOption)
 	if opt.Skip != 0 {
 		mongo_op.Skip = &opt.Skip
 	}
-	return obj.object.CountDocuments(pre_ctx, filter, &mongo_op)
+	return obj.table.CountDocuments(pre_ctx, filter, &mongo_op)
 }
 
 // 添加文档
 func (obj *Table) Add(pre_ctx context.Context, document any) (primitive.ObjectID, error) {
 	var rs_id primitive.ObjectID
-	res, err := obj.object.InsertOne(pre_ctx, document)
+	res, err := obj.table.InsertOne(pre_ctx, document)
 	if err != nil {
 		return rs_id, err
 	}
@@ -370,7 +400,7 @@ func (obj *Table) Adds(pre_ctx context.Context, document ...any) ([]primitive.Ob
 	if document_len == 0 {
 		return rs_ids, nil
 	}
-	res, err := obj.object.InsertMany(pre_ctx, document)
+	res, err := obj.table.InsertMany(pre_ctx, document)
 	if err != nil {
 		return rs_ids, err
 	}
@@ -382,7 +412,7 @@ func (obj *Table) Adds(pre_ctx context.Context, document ...any) ([]primitive.Ob
 
 // 删除一个文档
 func (obj *Table) Del(pre_ctx context.Context, document any) (int64, error) {
-	res, err := obj.object.DeleteOne(pre_ctx, document)
+	res, err := obj.table.DeleteOne(pre_ctx, document)
 	if err != nil {
 		return 0, err
 	}
@@ -391,7 +421,7 @@ func (obj *Table) Del(pre_ctx context.Context, document any) (int64, error) {
 
 // 删除一些文档
 func (obj *Table) Dels(pre_ctx context.Context, document any) (int64, error) {
-	res, err := obj.object.DeleteMany(pre_ctx, document)
+	res, err := obj.table.DeleteMany(pre_ctx, document)
 	if err != nil {
 		return 0, err
 	}
@@ -411,7 +441,7 @@ func (obj *Table) Update(pre_ctx context.Context, filter any, update any, values
 		}
 	}
 
-	res, err := obj.object.UpdateOne(pre_ctx, filter, updateData)
+	res, err := obj.table.UpdateOne(pre_ctx, filter, updateData)
 	if err != nil {
 		return result, err
 	}
@@ -433,7 +463,7 @@ func (obj *Table) Updates(pre_ctx context.Context, filter any, update any, value
 			updateData[kk] = vv
 		}
 	}
-	res, err := obj.object.UpdateMany(pre_ctx, filter, updateData)
+	res, err := obj.table.UpdateMany(pre_ctx, filter, updateData)
 	if err != nil {
 		return result, err
 	}
@@ -460,7 +490,7 @@ func (obj *Table) Upsert(pre_ctx context.Context, filter any, update any, values
 	}
 
 	c := true
-	res, err := obj.object.UpdateOne(pre_ctx, filter, updateData, &options.UpdateOptions{Upsert: &c})
+	res, err := obj.table.UpdateOne(pre_ctx, filter, updateData, &options.UpdateOptions{Upsert: &c})
 	if err != nil {
 		return result, err
 	}
@@ -492,7 +522,7 @@ func (obj *Table) Upserts(pre_ctx context.Context, filter any, update any, value
 		}
 	}
 	c := true
-	res, err := obj.object.UpdateMany(pre_ctx, filter, updateData, &options.UpdateOptions{Upsert: &c})
+	res, err := obj.table.UpdateMany(pre_ctx, filter, updateData, &options.UpdateOptions{Upsert: &c})
 	if err != nil {
 		return result, err
 	}
@@ -642,7 +672,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	pre_ctx, pre_cnl := context.WithCancel(preCtx)
 	defer pre_cnl()
 	syncFilter := map[string]string{
-		"tableName": obj.TableName(),
+		"tableName": obj.Name(),
 		"tag":       tag,
 	}
 	if clearOption.Filter == nil {

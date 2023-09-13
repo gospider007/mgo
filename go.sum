@@ -22,6 +22,8 @@ gitee.com/baixudong/requests v0.0.0-20230819071403-c9571ecfd448 h1:0BrzG2sgWxMRh
 gitee.com/baixudong/requests v0.0.0-20230819071403-c9571ecfd448/go.mod h1:bUuaxk4bKme5idX6j1N9kMwvDNMhdtTBrWqtN5AEfOM=
 gitee.com/baixudong/requests v0.0.0-20230909010428-6e8ec47a897f h1:Xc8RY+X2zMA7D2P3tdzFoHD4FqABeC/8ytBIdt2aJFQ=
 gitee.com/baixudong/requests v0.0.0-20230909010428-6e8ec47a897f/go.mod h1:n9CpwuHPU8TsA3mNWKLQkYlAVHv2P9grl5EqHD7fqoY=
+gitee.com/baixudong/requests v0.0.0-20230913035344-d28a6d30b6c0 h1:YcQ1H2kmGbFefmuqobEdqP74cDe9U1OUkEprEbduprQ=
+gitee.com/baixudong/requests v0.0.0-20230913035344-d28a6d30b6c0/go.mod h1:n9CpwuHPU8TsA3mNWKLQkYlAVHv2P9grl5EqHD7fqoY=
 gitee.com/baixudong/thread v0.0.0-20230816024758-36a0eb918f78 h1:IL5x9nUgS9itoKBe3fZErwdVOLGB8LjNXUYztvT03WM=
 gitee.com/baixudong/thread v0.0.0-20230816024758-36a0eb918f78/go.mod h1:fihO1WLV+wMMwYemWujHtOn7gd75kPsYdmkBx362ShU=
 gitee.com/baixudong/tools v0.0.0-20230821075140-7422c51fd918 h1:2X5AmuHDIPCZ1HGnBOxJoBMpFMi9rcWi7uzNtKP23jg=
