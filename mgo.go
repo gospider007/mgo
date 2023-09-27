@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"gitee.com/baixudong/bar"
-	"gitee.com/baixudong/bson"
+	"gitee.com/baixudong/gson"
 	"gitee.com/baixudong/kinds"
 	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/thread"
@@ -81,13 +81,13 @@ func (obj *FindData) Map() map[string]any {
 
 // 使用json.Unmarshal 解码
 func (obj *FindData) Decode(val any) (err error) {
-	_, err = bson.Decode(obj.Map(), val)
+	_, err = gson.Decode(obj.Map(), val)
 	return
 }
 
 // 返回gjson
-func (obj *FindData) Json() *bson.Client {
-	result, _ := bson.Decode(obj.Map())
+func (obj *FindData) Json() *gson.Client {
+	result, _ := gson.Decode(obj.Map())
 	return result
 }
 
@@ -98,7 +98,7 @@ func (obj *FindData) String() string {
 
 // 返回字节
 func (obj *FindData) Bytes() []byte {
-	con, _ := bson.Encode(obj.Map())
+	con, _ := gson.Encode(obj.Map())
 	return con
 }
 
@@ -134,8 +134,8 @@ func (obj *FindsData) Len() int {
 }
 
 // 返回gjson
-func (obj *FindsData) Json() *bson.Client {
-	result, _ := bson.Decode(obj.Map())
+func (obj *FindsData) Json() *gson.Client {
+	result, _ := gson.Decode(obj.Map())
 	return result
 }
 
@@ -152,7 +152,7 @@ func (obj *FindsData) Map() map[string]any {
 
 // 使用json.Unmarshal 解码
 func (obj *FindsData) Decode(val any) (err error) {
-	_, err = bson.Decode(obj.Map(), val)
+	_, err = gson.Decode(obj.Map(), val)
 	return
 }
 
@@ -163,7 +163,7 @@ func (obj *FindsData) String() string {
 
 // 返回字节
 func (obj *FindsData) Bytes() []byte {
-	con, _ := bson.Encode(obj.Map())
+	con, _ := gson.Encode(obj.Map())
 	return con
 }
 
@@ -882,7 +882,7 @@ func ClearOplog(oplogData map[string]any) Oplog {
 			case ObjectID:
 				hid = val
 			default:
-				// log.Print(bson.Decode(oplogData).Raw)
+				// log.Print(gson.Decode(oplogData).Raw)
 				// panic("未知的数据类型")
 			}
 		} else {
@@ -890,7 +890,7 @@ func ClearOplog(oplogData map[string]any) Oplog {
 			case ObjectID:
 				hid = val
 			default:
-				// log.Print(bson.Decode(oplogData).Raw)
+				// log.Print(gson.Decode(oplogData).Raw)
 				// panic("未知的数据类型2")
 			}
 		}
@@ -912,7 +912,7 @@ func ClearOplog(oplogData map[string]any) Oplog {
 		case ObjectID:
 			hid = val
 		default:
-			// log.Print(bson.Decode(oplogData).Raw)
+			// log.Print(gson.Decode(oplogData).Raw)
 			// panic("未知的数据类型3")
 		}
 	}
