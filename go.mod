@@ -15,7 +15,6 @@ require (
 require (
 	gitee.com/baixudong/blog v0.0.0-20230923032533-d83e7cb672f7 // indirect
 	gitee.com/baixudong/bs4 v0.0.0-20230923032731-cc82de4893bd // indirect
-	gitee.com/baixudong/bson v0.0.0-20230926055556-209f126c0a34 // indirect
 	gitee.com/baixudong/chanx v0.0.0-20230816024511-b821b53110c5 // indirect
 	gitee.com/baixudong/ja3 v0.0.0-20230923032211-164f4a779e92 // indirect
 	gitee.com/baixudong/net v0.0.0-20230923032225-d53725e7011a // indirect
