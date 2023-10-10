@@ -655,7 +655,7 @@ func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context
 			return err
 		}
 	}
-	if err := pool.Join(); err != nil {
+	if err := pool.JoinClose(); err != nil {
 		return err
 	}
 	if !lastOid.IsZero() {
@@ -819,7 +819,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 		}
 	}
-	if err := pool.Join(); err != nil {
+	if err := pool.JoinClose(); err != nil {
 		return err
 	}
 	if !lastOid.IsZero() {
