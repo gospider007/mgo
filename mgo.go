@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/baixudong/bar"
-	"gitee.com/baixudong/gson"
-	"gitee.com/baixudong/kinds"
-	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/thread"
-	"gitee.com/baixudong/tools"
+	"github.com/gospider007/bar"
+	"github.com/gospider007/gson"
+	"github.com/gospider007/kinds"
+	"github.com/gospider007/requests"
+	"github.com/gospider007/tools"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
