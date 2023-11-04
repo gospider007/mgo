@@ -608,14 +608,18 @@ func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context
 		Debug: clearOption.Debug,
 		TaskDoneCallBack: func(t *thread.Task) error {
 			cur++
-			if t.Error != nil {
-				return t.Error
+			if t.Error() != nil {
+				return t.Error()
 			}
-			if t.Result[2] != nil {
-				return t.Result[2].(error)
+			result, err := t.Result()
+			if err != nil {
+				return err
 			}
-			taskMap.Del(t.Result[0].(ObjectID))
-			lastOid = t.Result[1].(Timestamp)
+			if result[2] != nil {
+				return result[2].(error)
+			}
+			taskMap.Del(result[0].(ObjectID))
+			lastOid = result[1].(Timestamp)
 			if cur%int64(clearOption.Thread) == 0 {
 				if _, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
 					return nil
@@ -758,17 +762,21 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	pool := thread.NewClient(pre_ctx, clearOption.Thread, thread.ClientOption{
 		Debug: clearOption.Debug,
 		TaskDoneCallBack: func(t *thread.Task) error {
-			if t.Error != nil {
-				return t.Error
+			if t.Error() != nil {
+				return t.Error()
 			}
-			if t.Result[1] != nil {
-				return t.Result[1].(error)
+			result, err := t.Result()
+			if err != nil {
+				return err
+			}
+			if result[1] != nil {
+				return result[1].(error)
 			}
 			barCur++
 			if clearOption.Bar {
 				bar.Print()
 			}
-			lastOid = t.Result[0].(ObjectID)
+			lastOid = result[0].(ObjectID)
 			if barCur%int64(clearOption.Thread) == 0 {
 				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": lastOid, curTitle: barCur}); err != nil {
 					return err
