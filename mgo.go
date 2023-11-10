@@ -194,13 +194,7 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		opt.Port = 27017
 	}
 	uri := fmt.Sprintf("mongodb://%s:%d", opt.Host, opt.Port)
-	httpClient, err := requests.NewClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	clientOption := &options.ClientOptions{
-		HTTPClient: httpClient.HttpClient(),
 		BSONOptions: &options.BSONOptions{
 			UseJSONStructTags: true,
 		},
