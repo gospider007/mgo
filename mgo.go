@@ -38,8 +38,7 @@ type FindOption struct {
 	Await           bool           //oplog 是否阻塞等待数据
 }
 type ClientOption struct {
-	Host    string
-	Port    int
+	Addr    string
 	Usr     string
 	Pwd     string
 	Direct  bool
@@ -187,13 +186,10 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 
 // 新建客户端
 func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
-	if opt.Host == "" {
-		opt.Host = "localhost"
+	if opt.Addr == "" {
+		opt.Addr = ":27017"
 	}
-	if opt.Port == 0 {
-		opt.Port = 27017
-	}
-	uri := fmt.Sprintf("mongodb://%s:%d", opt.Host, opt.Port)
+	uri := fmt.Sprintf("mongodb://%s", opt.Addr)
 	clientOption := &options.ClientOptions{
 		BSONOptions: &options.BSONOptions{
 			UseJSONStructTags: true,
