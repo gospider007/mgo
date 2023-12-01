@@ -3,12 +3,12 @@ module github.com/gospider007/mgo
 go 1.21.3
 
 require (
-	github.com/gospider007/bar v0.0.0-20231121084140-33c7b6797626
+	github.com/gospider007/bar v0.0.0-20231201075546-252b6e7b6a54
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
 	github.com/gospider007/kinds v0.0.0-20231024093643-7a4424f2d30e
-	github.com/gospider007/requests v0.0.0-20231128143026-4fc244909b26
-	github.com/gospider007/thread v0.0.0-20231124122508-04275b46bc0d
-	github.com/gospider007/tools v0.0.0-20231128142841-23217c299fc2
+	github.com/gospider007/requests v0.0.0-20231201075721-36a4432d7123
+	github.com/gospider007/thread v0.0.0-20231201075505-f2f792cf3aa7
+	github.com/gospider007/tools v0.0.0-20231201075443-f0a4bc8cd616
 	go.mongodb.org/mongo-driver v1.13.0
 )
 

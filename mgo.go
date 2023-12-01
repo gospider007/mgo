@@ -531,7 +531,7 @@ func (obj *Table) Upserts(pre_ctx context.Context, filter any, update any, value
 }
 
 type ClearOption struct {
-	Thread         int64          //线程数量
+	Thread         int            //线程数量
 	Init           bool           //是否初始化
 	Oid            ObjectID       //起始id
 	Show           map[string]int //展示的字段
@@ -543,7 +543,7 @@ type ClearOption struct {
 	Debug          bool           //是否开启debug
 }
 type ClearOplogOption struct {
-	Thread    int64          //线程数量
+	Thread    int            //线程数量
 	Init      bool           //是否初始化
 	Oid       Timestamp      //起始id
 	Show      map[string]int //展示的字段
@@ -764,7 +764,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 			barCur++
 			if clearOption.Bar {
-				bar.Print()
+				bar.Add()
 			}
 			lastOid = result[0].(ObjectID)
 			if barCur%int64(clearOption.Thread) == 0 {
