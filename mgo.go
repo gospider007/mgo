@@ -32,9 +32,9 @@ type FindOption struct {
 	Limit           int64          //要返回的最大文档数
 	Timeout         time.Duration  //超时时间
 	NoCursorTimeout bool           //操作所创建的游标在一段时间不活动后不会超时
-	Show            map[string]int //描述哪些字段将被包含在操作返回的文件中的文件
+	Show            map[string]any //描述哪些字段将被包含在操作返回的文件中的文件
 	Skip            int64          //在将文档添加到结果中之前要跳过的文档数量
-	Sort            map[string]int // 一个文件，指定返回文件的顺序
+	Sort            map[string]any // 一个文件，指定返回文件的顺序
 	Await           bool           //oplog 是否阻塞等待数据
 }
 type ClientOption struct {
@@ -298,7 +298,7 @@ func (obj *Table) Find(pre_ctx context.Context, filter any, opts ...FindOption) 
 // 判断数据是否存在
 func (obj *Table) Exist(pre_ctx context.Context, filter any) (bool, error) {
 	rs, err := obj.Find(pre_ctx, filter, FindOption{
-		Show: map[string]int{"_id": 1},
+		Show: map[string]any{"_id": 1},
 	})
 	if err != nil {
 		return false, err
@@ -534,7 +534,7 @@ type ClearOption struct {
 	Thread         int            //线程数量
 	Init           bool           //是否初始化
 	Oid            ObjectID       //起始id
-	Show           map[string]int //展示的字段
+	Show           map[string]any //展示的字段
 	Desc           bool           //是否倒序
 	Filter         map[string]any //查询参数
 	Bar            bool           //是否开启进度条
@@ -546,7 +546,7 @@ type ClearOplogOption struct {
 	Thread    int            //线程数量
 	Init      bool           //是否初始化
 	Oid       Timestamp      //起始id
-	Show      map[string]int //展示的字段
+	Show      map[string]any //展示的字段
 	Filter    map[string]any //查询参数
 	BatchSize int32          //服务器每批次多少
 	Debug     bool           //是否开启debug
@@ -729,7 +729,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	var datas *FindsData
 	var err error
 
-	datas, err = obj.Finds(pre_ctx, clearOption.Filter, FindOption{Sort: map[string]int{"_id": lgteInt}, Show: clearOption.Show})
+	datas, err = obj.Finds(pre_ctx, clearOption.Filter, FindOption{Sort: map[string]any{"_id": lgteInt}, Show: clearOption.Show})
 	if err != nil {
 		return err
 	}
