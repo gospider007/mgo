@@ -20,8 +20,6 @@ require (
 	github.com/cloudflare/circl v1.3.6 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20231205033806-a5a03c77bf08 // indirect
 	github.com/gospider007/blog v0.0.0-20231121084103-59a004dafccf // indirect
 	github.com/gospider007/bs4 v0.0.0-20231123090151-001db0b91941 // indirect
 	github.com/gospider007/chanx v0.0.0-20231024081700-522ff183916d // indirect
@@ -39,8 +37,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.13.2 // indirect
-	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/quic-go/quic-go v0.40.1 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
 	github.com/tidwall/gjson v1.17.0 // indirect
