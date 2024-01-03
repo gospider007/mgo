@@ -234,6 +234,14 @@ type Table struct {
 func (obj *Client) NewDb(dbName string) *Db {
 	return &Db{db: obj.client.Database(dbName), name: dbName}
 }
+
+func (obj *Client) Close(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return obj.client.Disconnect(ctx)
+}
+
 func (obj *Db) NewTable(tableName string) *Table {
 	return &Table{db: obj, table: obj.db.Collection(tableName), dbName: obj.name, name: tableName}
 }
