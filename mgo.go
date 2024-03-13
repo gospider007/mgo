@@ -685,31 +685,33 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	if clearOption.Thread == 0 {
 		clearOption.Thread = 100
 	}
-	var barTotal int64
 	var barCur int64
-	var TotalOk bool
 	var CurOk bool
 	var curTitle string
+
+	//倒序
 	if clearOption.Desc {
 		curTitle = "descCount"
 		obj.NewTable("TempSyncData").Update(pre_ctx, syncFilter, nil, map[string]any{
 			"$unset": map[string]any{"ascCount": ""},
 		})
 	} else {
+		//正序
 		curTitle = "ascCount"
 		obj.NewTable("TempSyncData").Update(pre_ctx, syncFilter, nil, map[string]any{
 			"$unset": map[string]any{"descCount": ""},
 		})
 	}
+	//断点续传
 	if clearOption.Oid.IsZero() && !clearOption.Init {
 		syncData, err := obj.NewTable("TempSyncData").Find(pre_ctx, syncFilter)
 		if err != nil {
 			return err
 		}
+		//如果有断点续传数据
 		if syncData != nil {
 			clearOption.Oid = syncData.Map()["oid"].(ObjectID)
 			var CurAny any
-			var TotalAny any
 			if clearOption.Desc {
 				CurAny, CurOk = syncData.Map()[curTitle]
 			} else {
@@ -717,10 +719,6 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 			if CurOk {
 				barCur = CurAny.(int64)
-			}
-			TotalAny, TotalOk = syncData.Map()["total"]
-			if TotalOk {
-				barTotal = TotalAny.(int64)
 			}
 		}
 	}
@@ -742,13 +740,12 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 		return err
 	}
 	defer datas.Close(pre_ctx)
-	if !TotalOk || !clearOption.Desc || clearOption.Oid.IsZero() {
-		barTotal, err = obj.Count(pre_ctx, nil)
-		if err != nil {
-			return err
-		}
+
+	barTotal, err := obj.Count(pre_ctx, nil)
+	if err != nil {
+		return err
 	}
-	_, err = obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": clearOption.Oid, "total": barTotal})
+	_, err = obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": clearOption.Oid})
 	if err != nil {
 		return nil
 	}
@@ -756,7 +753,13 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 		barCur = 0
 	}
 	var lastOid ObjectID
+	var bsN int64
+	bsN = clearOption.ClearBatchSize
+	if bsN == 0 {
+		bsN = 1
+	}
 	bar := bar.NewClient(barTotal, bar.ClientOption{Cur: barCur})
+	var saveN int
 	pool := thread.NewClient(pre_ctx, clearOption.Thread, thread.ClientOption{
 		Debug: clearOption.Debug,
 		TaskDoneCallBack: func(t *thread.Task) error {
@@ -770,12 +773,13 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			if result[1] != nil {
 				return result[1].(error)
 			}
-			barCur++
+			barCur += bsN
+			saveN++
 			if clearOption.Bar {
-				bar.Add()
+				bar.Add(bsN)
 			}
 			lastOid = result[0].(ObjectID)
-			if barCur%int64(clearOption.Thread) == 0 {
+			if saveN%clearOption.Thread == 0 {
 				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": lastOid, curTitle: barCur}); err != nil {
 					return err
 				}
@@ -803,8 +807,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 				tempDatas = []map[string]any{}
 			}
 		}
-		tempDatasLen := len(tempDatas)
-		if tempDatasLen > 0 {
+		if tempDatasLen := len(tempDatas); tempDatasLen > 0 {
 			if _, err := pool.Write(&thread.Task{
 				Func: Func,
 				Args: []any{tempDatas, tmId},
@@ -829,6 +832,9 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 		return err
 	}
 	if !lastOid.IsZero() {
+		if lastOid.Hex() == clearOption.Oid.Hex() {
+			barCur = barTotal
+		}
 		if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": lastOid, curTitle: barCur}); err != nil {
 			return err
 		}
