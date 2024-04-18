@@ -562,6 +562,9 @@ type ClearOplogOption struct {
 
 // 清洗oplog集合
 func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context, Oplog, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearOptions ...ClearOplogOption) error {
+	if preCctx == nil {
+		preCctx = context.TODO()
+	}
 	pre_ctx, pre_cnl := context.WithCancel(preCctx)
 	defer pre_cnl()
 	syncFilter := map[string]string{
@@ -636,6 +639,12 @@ func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context
 	for datas.Next(pre_ctx) {
 		data := ClearOplog(datas.Map())
 		if data.ObjectID.IsZero() {
+			cur++
+			if cur%int64(clearOption.Thread) == 0 {
+				if _, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
+					return nil
+				}
+			}
 			continue
 		}
 		for taskMap.Has(data.ObjectID) {
