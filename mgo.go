@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 
@@ -167,8 +168,9 @@ func (obj *FindsData) Bytes() []byte {
 }
 
 type mgoDialer struct {
-	dialer  *net.Dialer
+	dialer  *requests.DialClient
 	hostMap map[string]string
+	proxy   *url.URL
 }
 
 func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr string) (net.Conn, error) {
@@ -181,7 +183,10 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 			}
 		}
 	}
-	return obj.dialer.DialContext(ctx, network, addr)
+	if obj.proxy != nil {
+		return obj.dialer.Socks5Proxy(ctx, nil, network, addr, obj.proxy)
+	}
+	return obj.dialer.DialContext(ctx, nil, network, addr)
 }
 
 // 新建客户端
@@ -203,7 +208,7 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		})
 	}
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
-	mgoDialer.dialer = requests.NewDialer(requests.DialOption{})
+	mgoDialer.dialer = requests.NewDail(requests.DialOption{})
 	clientOption.SetDialer(mgoDialer)
 	clientOption.SetDirect(opt.Direct)
 	clientOption.SetDisableOCSPEndpointCheck(true)
@@ -242,6 +247,9 @@ func (obj *Client) Close(ctx context.Context) error {
 	return obj.client.Disconnect(ctx)
 }
 
+type CreateTableOption struct {
+}
+
 func (obj *Db) NewTable(tableName string) *Table {
 	return &Table{db: obj, table: obj.db.Collection(tableName), dbName: obj.name, name: tableName}
 }
@@ -265,7 +273,9 @@ func (obj *Client) Dbs(ctx context.Context) ([]string, error) {
 func (obj *Table) DbName() string {
 	return obj.dbName
 }
-
+func (obj *Table) Table() *mongo.Collection {
+	return obj.table
+}
 func (obj *Db) Name() string {
 	return obj.name
 }
@@ -640,7 +650,7 @@ func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context
 		data := ClearOplog(datas.Map())
 		if data.ObjectID.IsZero() {
 			cur++
-			if cur%int64(clearOption.Thread) == 0 {
+			if cur%(int64(clearOption.Thread)*10) == 0 {
 				if _, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
 					return nil
 				}
