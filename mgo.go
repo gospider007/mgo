@@ -39,11 +39,12 @@ type FindOption struct {
 	Await           bool           //oplog 是否阻塞等待数据
 }
 type ClientOption struct {
-	Addr    string
-	Usr     string
-	Pwd     string
-	Direct  bool
-	HostMap map[string]string
+	Addr        string
+	Usr         string
+	Pwd         string
+	Direct      bool
+	HostMap     map[string]string
+	Socks5Proxy string
 }
 type FindsData struct {
 	cursor  *mongo.Cursor
@@ -209,6 +210,16 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 	}
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
 	mgoDialer.dialer = requests.NewDail(requests.DialOption{})
+	if opt.Socks5Proxy != "" {
+		socks5, err := url.Parse(opt.Socks5Proxy)
+		if err != nil {
+			return nil, err
+		}
+		if socks5.Scheme != "socks5" {
+			return nil, fmt.Errorf("invalid socks5 proxy url: %s", opt.Socks5Proxy)
+		}
+		mgoDialer.proxy = socks5
+	}
 	clientOption.SetDialer(mgoDialer)
 	clientOption.SetDirect(opt.Direct)
 	clientOption.SetDisableOCSPEndpointCheck(true)
