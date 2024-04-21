@@ -348,8 +348,8 @@ func (obj *Table) Finds(pre_ctx context.Context, filter any, opts ...FindOption)
 	if filter == nil {
 		filter = map[string]string{}
 	}
-	if opt.BatchSize == 0 {
-		opt.BatchSize = 50
+	if opt.BatchSize <= 0 {
+		opt.BatchSize = 100
 	}
 	mongo_op := options.FindOptions{
 		Projection:      opt.Show,
@@ -915,8 +915,11 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	if len(clearChangeStreamOptions) > 0 {
 		clearOption = clearChangeStreamOptions[0]
 	}
-	if clearOption.Thread == 0 {
+	if clearOption.Thread <= 0 {
 		clearOption.Thread = 100
+	}
+	if clearOption.BatchSize <= 0 {
+		clearOption.BatchSize = 100
 	}
 	if clearOption.Oid.IsZero() && !clearOption.Init {
 		syncData, err := obj.NewTable("TempSyncData").Find(pre_ctx, syncFilter)
@@ -934,6 +937,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	if !clearOption.Oid.IsZero() {
 		option.StartAtOperationTime = &clearOption.Oid
 	}
+	option.BatchSize = &clearOption.BatchSize
 	datas, err = obj.table.Watch(pre_ctx, []any{}, &option)
 	if err != nil {
 		return err
