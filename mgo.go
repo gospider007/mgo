@@ -897,8 +897,9 @@ type ClearChangeStreamOption struct {
 	Oid    Timestamp //起始id
 	// Show      map[string]any //展示的字段
 	// Filter    map[string]any //查询参数
-	BatchSize int32 //服务器每批次多少
-	Debug     bool  //是否开启debug
+	DisShowDocument bool
+	BatchSize       int32 //服务器每批次多少
+	Debug           bool  //是否开启debug
 }
 
 func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.Context, ChangeStream, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearChangeStreamOptions ...ClearChangeStreamOption) error {
@@ -938,7 +939,18 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 		option.StartAtOperationTime = &clearOption.Oid
 	}
 	option.BatchSize = &clearOption.BatchSize
-	datas, err = obj.table.Watch(pre_ctx, []any{}, &option)
+	pipeline := []map[string]any{}
+	if clearOption.DisShowDocument {
+		pipeline = append(pipeline, map[string]any{
+			"$project": map[string]any{
+				"_id":           1,
+				"clusterTime":   1,
+				"documentKey":   1,
+				"operationType": 1,
+			},
+		})
+	}
+	datas, err = obj.table.Watch(pre_ctx, pipeline, &option)
 	if err != nil {
 		return err
 	}
