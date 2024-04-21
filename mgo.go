@@ -872,6 +872,150 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	return nil
 }
 
+type ChangeStream struct {
+	IdData        string
+	Timestamp     Timestamp
+	ObjectID      ObjectID
+	FullDocument  map[string]*gson.Client
+	OperationType string
+}
+
+func clearChangeStream(raw map[string]any) ChangeStream {
+	var result ChangeStream
+	jsonData, _ := gson.Decode(raw)
+	result.IdData = jsonData.Get("_id._data").String()
+	result.Timestamp = Timestamp{T: uint32(jsonData.Get("clusterTime.T").Int()), I: uint32(jsonData.Get("clusterTime.I").Int())}
+	result.ObjectID, _ = ObjectIDFromHex(jsonData.Get("documentKey._id").String())
+	result.FullDocument = jsonData.Get("fullDocument").Map()
+	result.OperationType = jsonData.Get("operationType").String()
+	return result
+}
+
+type ClearChangeStreamOption struct {
+	Thread int       //线程数量
+	Init   bool      //是否初始化
+	Oid    Timestamp //起始id
+	// Show      map[string]any //展示的字段
+	// Filter    map[string]any //查询参数
+	BatchSize int32 //服务器每批次多少
+	Debug     bool  //是否开启debug
+}
+
+func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.Context, ChangeStream, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearChangeStreamOptions ...ClearChangeStreamOption) error {
+	if preCctx == nil {
+		preCctx = context.TODO()
+	}
+	pre_ctx, pre_cnl := context.WithCancel(preCctx)
+	defer pre_cnl()
+	syncFilter := map[string]string{
+		"tableName": obj.Name(),
+		"tag":       tag,
+	}
+	var clearOption ClearChangeStreamOption
+	if len(clearChangeStreamOptions) > 0 {
+		clearOption = clearChangeStreamOptions[0]
+	}
+	if clearOption.Thread == 0 {
+		clearOption.Thread = 100
+	}
+	if clearOption.Oid.IsZero() && !clearOption.Init {
+		syncData, err := obj.NewTable("TempSyncData").Find(pre_ctx, syncFilter)
+		if err != nil {
+			return err
+		}
+		if syncData != nil {
+			clearOption.Oid = syncData.Map()["oid"].(Timestamp)
+		}
+	}
+	obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
+	var datas *mongo.ChangeStream
+	var err error
+	var option options.ChangeStreamOptions
+	if !clearOption.Oid.IsZero() {
+		option.StartAtOperationTime = &clearOption.Oid
+	}
+	datas, err = obj.table.Watch(pre_ctx, []any{}, &option)
+	if err != nil {
+		return err
+	}
+	defer datas.Close(pre_ctx)
+	var cur int64
+	var lastOid Timestamp
+	taskMap := kinds.NewSet[ObjectID]()
+	pool := thread.NewClient(pre_ctx, clearOption.Thread, thread.ClientOption{
+		Debug: clearOption.Debug,
+		TaskDoneCallBack: func(t *thread.Task) error {
+			cur++
+			if t.Error() != nil {
+				return t.Error()
+			}
+			result, err := t.Result()
+			if err != nil {
+				return err
+			}
+			if result[2] != nil {
+				return result[2].(error)
+			}
+			taskMap.Del(result[0].(ObjectID))
+			lastOid = result[1].(Timestamp)
+			if cur%int64(clearOption.Thread) == 0 {
+				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
+					return nil
+				}
+			}
+			return nil
+		},
+	})
+	defer pool.Close()
+	var afterTime *time.Timer
+	defer func() {
+		if afterTime != nil {
+			afterTime.Stop()
+		}
+	}()
+	for datas.Next(pre_ctx) {
+		raw := map[string]any{}
+		datas.Decode(&raw)
+		data := clearChangeStream(raw)
+		if data.ObjectID.IsZero() {
+			cur++
+			if cur%(int64(clearOption.Thread)*10) == 0 {
+				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
+					return nil
+				}
+			}
+			continue
+		}
+		for taskMap.Has(data.ObjectID) {
+			if afterTime == nil {
+				afterTime = time.NewTimer(time.Second)
+			} else {
+				afterTime.Reset(time.Second)
+			}
+			select {
+			case <-pool.Done():
+				return pool.Err()
+			case <-afterTime.C:
+			}
+		}
+		_, err := pool.Write(&thread.Task{
+			Func: Func, Args: []any{data, data.ObjectID, data.Timestamp},
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if err := pool.JoinClose(); err != nil {
+		return err
+	}
+	if !lastOid.IsZero() {
+		if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // 清洗集合数据
 func (obj *Table) ClearTable(preCtx context.Context, Func func(context.Context, map[string]any, ObjectID) (ObjectID, error), tag string, clearOptions ...ClearOption) error {
 	var clearOption ClearOption
