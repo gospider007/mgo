@@ -3,6 +3,7 @@ package mgo
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"strings"
@@ -900,6 +901,7 @@ type ClearChangeStreamOption struct {
 	DisShowDocument bool
 	BatchSize       int32 //服务器每批次多少
 	Debug           bool  //是否开启debug
+	QueueCacheSize  int   //队列缓存大小，默认是线程的三倍
 }
 
 func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.Context, ChangeStream, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearChangeStreamOptions ...ClearChangeStreamOption) error {
@@ -921,6 +923,9 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	}
 	if clearOption.BatchSize <= 0 {
 		clearOption.BatchSize = 100
+	}
+	if clearOption.QueueCacheSize <= 0 {
+		clearOption.QueueCacheSize = clearOption.Thread * 3
 	}
 	if clearOption.Oid.IsZero() && !clearOption.Init {
 		syncData, err := obj.NewTable("TempSyncData").Find(pre_ctx, syncFilter)
@@ -989,9 +994,27 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			afterTime.Stop()
 		}
 	}()
-	for datas.Next(pre_ctx) {
-		raw := map[string]any{}
-		datas.Decode(&raw)
+	datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
+	go func() {
+		defer close(datasPip)
+		for datas.Next(pre_ctx) {
+			raw := map[string]any{}
+			dataErr := datas.Decode(&raw)
+			if dataErr != nil {
+				log.Panic(dataErr)
+			}
+			select {
+			case <-pre_ctx.Done():
+				log.Print(preCctx.Err())
+				return
+			case datasPip <- raw:
+			}
+		}
+	}()
+	for raw := range datasPip {
+		// for datas.Next(pre_ctx) {
+		// raw := map[string]any{}
+		// datas.Decode(&raw)
 		data := clearChangeStream(raw)
 		if data.ObjectID.IsZero() {
 			cur++
