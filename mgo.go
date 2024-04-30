@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/gospider007/bar"
@@ -571,132 +570,7 @@ type ClearOption struct {
 	BatchSize      int32          //服务器每批次多少
 	ClearBatchSize int64          //每次清洗的批次
 	Debug          bool           //是否开启debug
-}
-type ClearOplogOption struct {
-	Thread    int            //线程数量
-	Init      bool           //是否初始化
-	Oid       Timestamp      //起始id
-	Show      map[string]any //展示的字段
-	Filter    map[string]any //查询参数
-	BatchSize int32          //服务器每批次多少
-	Debug     bool           //是否开启debug
-}
-
-// 清洗oplog集合
-func (obj *Client) ClearOplog(preCctx context.Context, Func func(context.Context, Oplog, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearOptions ...ClearOplogOption) error {
-	if preCctx == nil {
-		preCctx = context.TODO()
-	}
-	pre_ctx, pre_cnl := context.WithCancel(preCctx)
-	defer pre_cnl()
-	syncFilter := map[string]string{
-		"tableName": "oplog.rs",
-		"tag":       tag,
-	}
-	var clearOption ClearOplogOption
-	if len(clearOptions) > 0 {
-		clearOption = clearOptions[0]
-	}
-	if clearOption.Filter == nil {
-		clearOption.Filter = map[string]any{}
-	}
-	if clearOption.Thread == 0 {
-		clearOption.Thread = 100
-	}
-	if clearOption.Oid.IsZero() && !clearOption.Init {
-		syncData, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Find(pre_ctx, syncFilter)
-		if err != nil {
-			return err
-		}
-		if syncData != nil {
-			clearOption.Oid = syncData.Map()["oid"].(Timestamp)
-		}
-	}
-	obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
-	var datas *FindsData
-	var err error
-	if !clearOption.Oid.IsZero() {
-		clearOption.Filter["ts"] = map[string]Timestamp{"$gte": clearOption.Oid}
-	}
-	datas, err = obj.NewTable("local", "oplog.rs").Finds(pre_ctx, clearOption.Filter, FindOption{Show: clearOption.Show, Await: true, BatchSize: clearOption.BatchSize})
-	if err != nil {
-		return err
-	}
-	defer datas.Close(pre_ctx)
-
-	var cur int64
-	var lastOid Timestamp
-	taskMap := kinds.NewSet[ObjectID]()
-	pool := thread.NewClient(pre_ctx, clearOption.Thread, thread.ClientOption{
-		Debug: clearOption.Debug,
-		TaskDoneCallBack: func(t *thread.Task) error {
-			cur++
-			if t.Error() != nil {
-				return t.Error()
-			}
-			result, err := t.Result()
-			if err != nil {
-				return err
-			}
-			if result[2] != nil {
-				return result[2].(error)
-			}
-			taskMap.Del(result[0].(ObjectID))
-			lastOid = result[1].(Timestamp)
-			if cur%int64(clearOption.Thread) == 0 {
-				if _, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
-					return nil
-				}
-			}
-			return nil
-		},
-	})
-	defer pool.Close()
-	var afterTime *time.Timer
-	defer func() {
-		if afterTime != nil {
-			afterTime.Stop()
-		}
-	}()
-	for datas.Next(pre_ctx) {
-		data := ClearOplog(datas.Map())
-		if data.ObjectID.IsZero() {
-			cur++
-			if cur%(int64(clearOption.Thread)*10) == 0 {
-				if _, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
-					return nil
-				}
-			}
-			continue
-		}
-		for taskMap.Has(data.ObjectID) {
-			if afterTime == nil {
-				afterTime = time.NewTimer(time.Second)
-			} else {
-				afterTime.Reset(time.Second)
-			}
-			select {
-			case <-pool.Done():
-				return pool.Err()
-			case <-afterTime.C:
-			}
-		}
-		_, err := pool.Write(&thread.Task{
-			Func: Func, Args: []any{data, data.ObjectID, data.Timestamp},
-		})
-		if err != nil {
-			return err
-		}
-	}
-	if err := pool.JoinClose(); err != nil {
-		return err
-	}
-	if !lastOid.IsZero() {
-		if _, err := obj.NewTable("oplogSyncDataFile", "TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
-			return err
-		}
-	}
-	return nil
+	QueueCacheSize int            //队列缓存大小
 }
 
 // 清洗集合数据
@@ -713,8 +587,14 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	if clearOption.Filter == nil {
 		clearOption.Filter = map[string]any{}
 	}
-	if clearOption.Thread == 0 {
-		clearOption.Thread = 100
+	if clearOption.BatchSize <= 0 {
+		clearOption.BatchSize = 100
+	}
+	if clearOption.Thread <= 0 {
+		clearOption.Thread = 50
+	}
+	if clearOption.QueueCacheSize <= 0 {
+		clearOption.QueueCacheSize = clearOption.Thread * 3
 	}
 	var barCur int64
 	var CurOk bool
@@ -819,12 +699,22 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 		},
 	})
 	defer pool.Close()
-
 	var tmId ObjectID
+	datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
+	go func() {
+		defer close(datasPip)
+		for datas.Next(pre_ctx) {
+			select {
+			case <-pre_ctx.Done():
+				log.Print(pre_ctx.Err())
+				return
+			case datasPip <- datas.Map():
+			}
+		}
+	}()
 	if clearOption.ClearBatchSize > 0 {
 		tempDatas := []map[string]any{}
-		for datas.Next(pre_ctx) {
-			data := datas.Map()
+		for data := range datasPip {
 			tmId = data["_id"].(ObjectID)
 			tempDatas = append(tempDatas, data)
 			if len(tempDatas) >= int(clearOption.ClearBatchSize) {
@@ -847,8 +737,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 		}
 	} else {
-		for datas.Next(pre_ctx) {
-			data := datas.Map()
+		for data := range datasPip {
 			tmId = data["_id"].(ObjectID)
 			_, err := pool.Write(&thread.Task{
 				Func: Func,
@@ -918,11 +807,11 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	if len(clearChangeStreamOptions) > 0 {
 		clearOption = clearChangeStreamOptions[0]
 	}
-	if clearOption.Thread <= 0 {
-		clearOption.Thread = 100
-	}
 	if clearOption.BatchSize <= 0 {
 		clearOption.BatchSize = 100
+	}
+	if clearOption.Thread <= 0 {
+		clearOption.Thread = 50
 	}
 	if clearOption.QueueCacheSize <= 0 {
 		clearOption.QueueCacheSize = clearOption.Thread * 3
@@ -945,6 +834,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	}
 	option.BatchSize = &clearOption.BatchSize
 	pipeline := []map[string]any{}
+
 	if clearOption.DisShowDocument {
 		pipeline = append(pipeline, map[string]any{
 			"$project": map[string]any{
@@ -1005,7 +895,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			}
 			select {
 			case <-pre_ctx.Done():
-				log.Print(preCctx.Err())
+				log.Print(pre_ctx.Err())
 				return
 			case datasPip <- raw:
 			}
@@ -1074,74 +964,4 @@ func (obj *Table) ClearTables(preCtx context.Context, Func func(context.Context,
 		clearOption.ClearBatchSize = 100
 	}
 	return obj.clearTable(preCtx, Func, tag, clearOption)
-}
-
-type Oplog struct {
-	Op        string    //操作
-	Ns        string    //表名
-	Timestamp Timestamp //操作时间
-	ObjectID  ObjectID
-	Data      map[string]any //数据
-}
-
-// 清洗oplog data
-func ClearOplog(oplogData map[string]any) Oplog {
-	var result Oplog
-	op := oplogData["op"].(string)    //操作
-	ns := oplogData["ns"].(string)    // 表名
-	ts := oplogData["ts"].(Timestamp) //时间
-	result.Op = op
-	result.Ns = ns
-	result.Timestamp = ts
-	if strings.HasPrefix(ns, "config.") {
-		return result
-	}
-	var mond map[string]any
-	var hid ObjectID
-	oAny := oplogData["o"].(map[string]any)
-	if op == "u" {
-		oAny2 := oplogData["o2"].(map[string]any)
-		hidAny, ok := oAny["_id"]
-		if ok {
-			switch val := hidAny.(type) {
-			case ObjectID:
-				hid = val
-			default:
-				// log.Print(gson.Decode(oplogData).Raw)
-				// panic("未知的数据类型")
-			}
-		} else {
-			switch val := oAny2["_id"].(type) {
-			case ObjectID:
-				hid = val
-			default:
-				// log.Print(gson.Decode(oplogData).Raw)
-				// panic("未知的数据类型2")
-			}
-		}
-		mondAny, ok := oAny["$set"]
-		mondAny2, ok2 := oAny2["$set"]
-		if ok {
-			mond = mondAny.(map[string]any)
-		} else if ok2 {
-			mond = mondAny2.(map[string]any)
-		} else {
-			if len(oAny2) > len(oAny) {
-				mond = oAny2
-			} else {
-				mond = oAny
-			}
-		}
-	} else {
-		switch val := oAny["_id"].(type) {
-		case ObjectID:
-			hid = val
-		default:
-			// log.Print(gson.Decode(oplogData).Raw)
-			// panic("未知的数据类型3")
-		}
-	}
-	result.Data = mond
-	result.ObjectID = hid
-	return result
 }
