@@ -766,7 +766,7 @@ type ChangeStream struct {
 	IdData        string
 	Timestamp     Timestamp
 	ObjectID      ObjectID
-	FullDocument  map[string]*gson.Client
+	FullDocument  *gson.Client
 	OperationType string
 }
 
@@ -776,7 +776,7 @@ func clearChangeStream(raw map[string]any) ChangeStream {
 	result.IdData = jsonData.Get("_id._data").String()
 	result.Timestamp = Timestamp{T: uint32(jsonData.Get("clusterTime.T").Int()), I: uint32(jsonData.Get("clusterTime.I").Int())}
 	result.ObjectID, _ = ObjectIDFromHex(jsonData.Get("documentKey._id").String())
-	result.FullDocument = jsonData.Get("fullDocument").Map()
+	result.FullDocument = jsonData.Get("fullDocument")
 	result.OperationType = jsonData.Get("operationType").String()
 	return result
 }
