@@ -762,12 +762,51 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	return nil
 }
 
+type OperationType int
+
+const (
+	OperationTypeCreate OperationType = iota
+	OperationTypeCreateIndexes
+	OperationTypeDelete
+	OperationTypeDrop
+	OperationTypeDropDatabase
+	OperationTypeDropIndexes
+	OperationTypeInsert
+	OperationTypeInvalidate
+	OperationTypeModify
+	OperationTypeRefineCollectionShardKey
+	OperationTypeRename
+	OperationTypeReplace
+	OperationTypeReshardCollection
+	OperationTypeShardCollection
+	OperationTypeUpdate
+	OperationTypeOther
+)
+
+var operationTypeMap = map[string]OperationType{
+	"Create":                   OperationTypeCreate,
+	"CreateIndexes":            OperationTypeCreateIndexes,
+	"Delete":                   OperationTypeDelete,
+	"Drop":                     OperationTypeDrop,
+	"DropDatabase":             OperationTypeDropDatabase,
+	"DropIndexes":              OperationTypeDropIndexes,
+	"Insert":                   OperationTypeInsert,
+	"Invalidate":               OperationTypeInvalidate,
+	"Modify":                   OperationTypeModify,
+	"RefineCollectionShardKey": OperationTypeRefineCollectionShardKey,
+	"Rename":                   OperationTypeRename,
+	"Replace":                  OperationTypeReplace,
+	"ReshardCollection":        OperationTypeReshardCollection,
+	"ShardCollection":          OperationTypeShardCollection,
+	"Update":                   OperationTypeUpdate,
+}
+
 type ChangeStream struct {
 	IdData        string
 	Timestamp     Timestamp
 	ObjectID      ObjectID
 	FullDocument  *gson.Client
-	OperationType string
+	OperationType OperationType
 }
 
 func clearChangeStream(raw map[string]any) ChangeStream {
@@ -777,7 +816,11 @@ func clearChangeStream(raw map[string]any) ChangeStream {
 	result.Timestamp = Timestamp{T: uint32(jsonData.Get("clusterTime.T").Int()), I: uint32(jsonData.Get("clusterTime.I").Int())}
 	result.ObjectID, _ = ObjectIDFromHex(jsonData.Get("documentKey._id").String())
 	result.FullDocument = jsonData.Get("fullDocument")
-	result.OperationType = jsonData.Get("operationType").String()
+	operationType, ok := operationTypeMap[jsonData.Get("operationType").String()]
+	if !ok {
+		operationType = OperationTypeOther
+	}
+	result.OperationType = operationType
 	return result
 }
 
