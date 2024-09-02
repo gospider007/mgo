@@ -762,44 +762,25 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	return nil
 }
 
-type OperationType int
+type OperationType string
 
 const (
-	OperationTypeCreate OperationType = iota
-	OperationTypeCreateIndexes
-	OperationTypeDelete
-	OperationTypeDrop
-	OperationTypeDropDatabase
-	OperationTypeDropIndexes
-	OperationTypeInsert
-	OperationTypeInvalidate
-	OperationTypeModify
-	OperationTypeRefineCollectionShardKey
-	OperationTypeRename
-	OperationTypeReplace
-	OperationTypeReshardCollection
-	OperationTypeShardCollection
-	OperationTypeUpdate
-	OperationTypeOther
+	OperationTypeCreate                   = "create"
+	OperationTypeCreateIndexes            = "createIndexes"
+	OperationTypeDelete                   = "delete"
+	OperationTypeDrop                     = "drop"
+	OperationTypeDropDatabase             = "dropDatabase"
+	OperationTypeDropIndexes              = "dropIndexes"
+	OperationTypeInsert                   = "insert"
+	OperationTypeInvalidate               = "invalidate"
+	OperationTypeModify                   = "modify"
+	OperationTypeRefineCollectionShardKey = "refineCollectionShardKey"
+	OperationTypeRename                   = "rename"
+	OperationTypeReplace                  = "replace"
+	OperationTypeReshardCollection        = "reshardCollection"
+	OperationTypeShardCollection          = "shardCollection"
+	OperationTypeUpdate                   = "update"
 )
-
-var operationTypeMap = map[string]OperationType{
-	"create":                   OperationTypeCreate,
-	"createIndexes":            OperationTypeCreateIndexes,
-	"delete":                   OperationTypeDelete,
-	"drop":                     OperationTypeDrop,
-	"dropDatabase":             OperationTypeDropDatabase,
-	"dropIndexes":              OperationTypeDropIndexes,
-	"insert":                   OperationTypeInsert,
-	"invalidate":               OperationTypeInvalidate,
-	"modify":                   OperationTypeModify,
-	"refineCollectionShardKey": OperationTypeRefineCollectionShardKey,
-	"rename":                   OperationTypeRename,
-	"replace":                  OperationTypeReplace,
-	"reshardCollection":        OperationTypeReshardCollection,
-	"shardCollection":          OperationTypeShardCollection,
-	"update":                   OperationTypeUpdate,
-}
 
 type ChangeStream struct {
 	IdData        string
@@ -816,11 +797,7 @@ func clearChangeStream(raw map[string]any) ChangeStream {
 	result.Timestamp = Timestamp{T: uint32(jsonData.Get("clusterTime.T").Int()), I: uint32(jsonData.Get("clusterTime.I").Int())}
 	result.ObjectID, _ = ObjectIDFromHex(jsonData.Get("documentKey._id").String())
 	result.FullDocument = jsonData.Get("fullDocument")
-	operationType, ok := operationTypeMap[jsonData.Get("operationType").String()]
-	if !ok {
-		operationType = OperationTypeOther
-	}
-	result.OperationType = operationType
+	result.OperationType = OperationType(jsonData.Get("operationType").String())
 	return result
 }
 
