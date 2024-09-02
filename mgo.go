@@ -784,21 +784,21 @@ const (
 )
 
 var operationTypeMap = map[string]OperationType{
-	"Create":                   OperationTypeCreate,
-	"CreateIndexes":            OperationTypeCreateIndexes,
-	"Delete":                   OperationTypeDelete,
-	"Drop":                     OperationTypeDrop,
-	"DropDatabase":             OperationTypeDropDatabase,
-	"DropIndexes":              OperationTypeDropIndexes,
-	"Insert":                   OperationTypeInsert,
-	"Invalidate":               OperationTypeInvalidate,
-	"Modify":                   OperationTypeModify,
-	"RefineCollectionShardKey": OperationTypeRefineCollectionShardKey,
-	"Rename":                   OperationTypeRename,
-	"Replace":                  OperationTypeReplace,
-	"ReshardCollection":        OperationTypeReshardCollection,
-	"ShardCollection":          OperationTypeShardCollection,
-	"Update":                   OperationTypeUpdate,
+	"create":                   OperationTypeCreate,
+	"createIndexes":            OperationTypeCreateIndexes,
+	"delete":                   OperationTypeDelete,
+	"drop":                     OperationTypeDrop,
+	"dropDatabase":             OperationTypeDropDatabase,
+	"dropIndexes":              OperationTypeDropIndexes,
+	"insert":                   OperationTypeInsert,
+	"invalidate":               OperationTypeInvalidate,
+	"modify":                   OperationTypeModify,
+	"refineCollectionShardKey": OperationTypeRefineCollectionShardKey,
+	"rename":                   OperationTypeRename,
+	"replace":                  OperationTypeReplace,
+	"reshardCollection":        OperationTypeReshardCollection,
+	"shardCollection":          OperationTypeShardCollection,
+	"update":                   OperationTypeUpdate,
 }
 
 type ChangeStream struct {
