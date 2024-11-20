@@ -3,6 +3,7 @@ package mgo
 import (
 	"context"
 	"fmt"
+	"iter"
 	"log"
 	"net"
 	"net/url"
@@ -256,6 +257,17 @@ func (obj *Client) Close(ctx context.Context) error {
 		ctx = context.TODO()
 	}
 	return obj.client.Disconnect(ctx)
+}
+
+func (obj *FindsData) Range(ctx context.Context) iter.Seq[map[string]any] {
+	return func(yield func(map[string]any) bool) {
+		defer obj.Close(ctx)
+		for obj.Next(ctx) {
+			if !yield(obj.Map()) {
+				break
+			}
+		}
+	}
 }
 
 type CreateTableOption struct {
@@ -702,13 +714,11 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	var tmId ObjectID
 	datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
 	go func() {
-		defer close(datasPip)
-		for datas.Next(pre_ctx) {
+		for data := range datas.Range(pre_ctx) {
 			select {
 			case <-pre_ctx.Done():
-				log.Print(pre_ctx.Err())
 				return
-			case datasPip <- datas.Map():
+			case datasPip <- data:
 			}
 		}
 	}()
@@ -915,7 +925,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			}
 			select {
 			case <-pre_ctx.Done():
-				log.Print(pre_ctx.Err())
+				log.Print(context.Cause(pre_ctx))
 				return
 			case datasPip <- raw:
 			}
