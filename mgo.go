@@ -712,19 +712,20 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	})
 	defer pool.Close()
 	var tmId ObjectID
-	datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
-	go func() {
-		for data := range datas.Range(pre_ctx) {
-			select {
-			case <-pre_ctx.Done():
-				return
-			case datasPip <- data:
-			}
-		}
-	}()
+	// datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
+	// go func() {
+	// 	for data := range datas.Range(pre_ctx) {
+	// 		select {
+	// 		case <-pre_ctx.Done():
+	// 			return
+	// 		case datasPip <- data:
+	// 		}
+	// 	}
+	// }()
 	if clearOption.ClearBatchSize > 0 {
 		tempDatas := []map[string]any{}
-		for data := range datasPip {
+		// for data := range datasPip {
+		for data := range datas.Range(pre_ctx) {
 			tmId = data["_id"].(ObjectID)
 			tempDatas = append(tempDatas, data)
 			if len(tempDatas) >= int(clearOption.ClearBatchSize) {
@@ -747,7 +748,8 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 		}
 	} else {
-		for data := range datasPip {
+		// for data := range datasPip {
+		for data := range datas.Range(pre_ctx) {
 			tmId = data["_id"].(ObjectID)
 			_, err := pool.Write(&thread.Task{
 				Func: Func,
