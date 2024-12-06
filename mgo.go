@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"iter"
-	"log"
 	"net"
 	"net/url"
 	"time"
@@ -185,8 +184,9 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 			}
 		}
 	}
+
 	if obj.proxy != nil {
-		return obj.dialer.Socks5Proxy(ctx, nil, network, addr, obj.proxy)
+		return obj.dialer.Socks5Proxy(ctx, nil, network, obj.proxy, &url.URL{Host: addr})
 	}
 	return obj.dialer.DialContext(ctx, nil, network, addr)
 }
@@ -571,6 +571,26 @@ func (obj *Table) Upserts(pre_ctx context.Context, filter any, update any, value
 	return result, err
 }
 
+func (obj *Table) Watch(pre_ctx context.Context, pipeline any, opts ...*options.ChangeStreamOptions) (iter.Seq[ChangeStream], error) {
+	datas, err := obj.table.Watch(pre_ctx, pipeline, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return func(yield func(ChangeStream) bool) {
+		defer datas.Close(pre_ctx)
+		for datas.Next(pre_ctx) {
+			raw := map[string]any{}
+			err := datas.Decode(&raw)
+			if err != nil {
+				break
+			}
+			if !yield(clearChangeStream(raw)) {
+				break
+			}
+		}
+	}, nil
+}
+
 type ClearOption struct {
 	Thread         int            //线程数量
 	Init           bool           //是否初始化
@@ -712,19 +732,8 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	})
 	defer pool.Close()
 	var tmId ObjectID
-	// datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
-	// go func() {
-	// 	for data := range datas.Range(pre_ctx) {
-	// 		select {
-	// 		case <-pre_ctx.Done():
-	// 			return
-	// 		case datasPip <- data:
-	// 		}
-	// 	}
-	// }()
 	if clearOption.ClearBatchSize > 0 {
 		tempDatas := []map[string]any{}
-		// for data := range datasPip {
 		for data := range datas.Range(pre_ctx) {
 			tmId = data["_id"].(ObjectID)
 			tempDatas = append(tempDatas, data)
@@ -748,7 +757,6 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 		}
 	} else {
-		// for data := range datasPip {
 		for data := range datas.Range(pre_ctx) {
 			tmId = data["_id"].(ObjectID)
 			_, err := pool.Write(&thread.Task{
@@ -813,7 +821,7 @@ func clearChangeStream(raw map[string]any) ChangeStream {
 	return result
 }
 
-type ClearChangeStreamOption struct {
+type ChangeStreamOption struct {
 	Thread int       //线程数量
 	Init   bool      //是否初始化
 	Oid    Timestamp //起始id
@@ -825,7 +833,7 @@ type ClearChangeStreamOption struct {
 	QueueCacheSize  int   //队列缓存大小，默认是线程的三倍
 }
 
-func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.Context, ChangeStream, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearChangeStreamOptions ...ClearChangeStreamOption) error {
+func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.Context, ChangeStream, ObjectID, Timestamp) (ObjectID, Timestamp, error), tag string, clearChangeStreamOptions ...ChangeStreamOption) error {
 	if preCctx == nil {
 		preCctx = context.TODO()
 	}
@@ -835,7 +843,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 		"tableName": obj.Name(),
 		"tag":       tag,
 	}
-	var clearOption ClearChangeStreamOption
+	var clearOption ChangeStreamOption
 	if len(clearChangeStreamOptions) > 0 {
 		clearOption = clearChangeStreamOptions[0]
 	}
@@ -857,9 +865,10 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			clearOption.Oid = syncData.Map()["oid"].(Timestamp)
 		}
 	}
-	obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
-	var datas *mongo.ChangeStream
-	var err error
+	_, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
+	if err != nil {
+		return nil
+	}
 	var option options.ChangeStreamOptions
 	if !clearOption.Oid.IsZero() {
 		option.StartAtOperationTime = &clearOption.Oid
@@ -877,11 +886,6 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			},
 		})
 	}
-	datas, err = obj.table.Watch(pre_ctx, pipeline, &option)
-	if err != nil {
-		return err
-	}
-	defer datas.Close(pre_ctx)
 	var cur int64
 	var lastOid Timestamp
 	taskMap := kinds.NewSet[ObjectID]()
@@ -916,28 +920,11 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			afterTime.Stop()
 		}
 	}()
-	datasPip := make(chan map[string]any, clearOption.QueueCacheSize)
-	go func() {
-		defer close(datasPip)
-		for datas.Next(pre_ctx) {
-			raw := map[string]any{}
-			dataErr := datas.Decode(&raw)
-			if dataErr != nil {
-				log.Panic(dataErr)
-			}
-			select {
-			case <-pre_ctx.Done():
-				log.Print(context.Cause(pre_ctx))
-				return
-			case datasPip <- raw:
-			}
-		}
-	}()
-	for raw := range datasPip {
-		// for datas.Next(pre_ctx) {
-		// raw := map[string]any{}
-		// datas.Decode(&raw)
-		data := clearChangeStream(raw)
+	datas, err := obj.Watch(pre_ctx, pipeline, &option)
+	if err != nil {
+		return err
+	}
+	for data := range datas {
 		if data.ObjectID.IsZero() {
 			cur++
 			if cur%(int64(clearOption.Thread)*10) == 0 {
