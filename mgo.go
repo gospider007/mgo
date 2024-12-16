@@ -1,4 +1,4 @@
-go package mgo
+package mgo
 
 import (
 	"context"
