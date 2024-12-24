@@ -169,7 +169,7 @@ func (obj *FindsData) Bytes() []byte {
 }
 
 type mgoDialer struct {
-	dialer  *requests.DialClient
+	dialer  *requests.Dialer
 	hostMap map[string]string
 	proxy   *url.URL
 }
@@ -210,7 +210,7 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		})
 	}
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
-	mgoDialer.dialer = requests.NewDail(requests.DialOption{})
+	mgoDialer.dialer = &requests.Dialer{}
 	if opt.Socks5Proxy != "" {
 		socks5, err := url.Parse(opt.Socks5Proxy)
 		if err != nil {
