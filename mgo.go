@@ -177,6 +177,9 @@ type mgoDialer struct {
 func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr string) (net.Conn, error) {
 	if obj.hostMap != nil {
 		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
 		if err == nil {
 			val, ok := obj.hostMap[host]
 			if ok {
@@ -184,11 +187,18 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 			}
 		}
 	}
-
-	if obj.proxy != nil {
-		return obj.dialer.Socks5Proxy(ctx, nil, network, obj.proxy, &url.URL{Host: addr})
+	address, err := requests.GetAddressWithAddr(addr)
+	if err != nil {
+		return nil, err
 	}
-	return obj.dialer.DialContext(ctx, nil, network, addr)
+	if obj.proxy != nil {
+		proxyAddress, err := requests.GetAddressWithUrl(obj.proxy)
+		if err != nil {
+			return nil, err
+		}
+		return obj.dialer.Socks5TcpProxy(ctx, nil, proxyAddress, address)
+	}
+	return obj.dialer.DialContext(ctx, nil, network, address)
 }
 
 // 新建客户端
