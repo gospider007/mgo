@@ -180,11 +180,9 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 		if err != nil {
 			return nil, err
 		}
-		if err == nil {
-			val, ok := obj.hostMap[host]
-			if ok {
-				addr = val + ":" + port
-			}
+		val, ok := obj.hostMap[host]
+		if ok {
+			addr = val + ":" + port
 		}
 	}
 	address, err := requests.GetAddressWithAddr(addr)
@@ -196,9 +194,9 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 		if err != nil {
 			return nil, err
 		}
-		return obj.dialer.Socks5TcpProxy(ctx, nil, proxyAddress, address)
+		return obj.dialer.Socks5TcpProxy(requests.NewResponse(ctx, requests.RequestOption{}), proxyAddress, address)
 	}
-	return obj.dialer.DialContext(ctx, nil, network, address)
+	return obj.dialer.DialContext(requests.NewResponse(ctx, requests.RequestOption{}), network, address)
 }
 
 // 新建客户端
