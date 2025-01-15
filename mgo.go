@@ -579,8 +579,45 @@ func (obj *Table) Upserts(pre_ctx context.Context, filter any, update any, value
 	return result, err
 }
 
-func (obj *Table) Watch(pre_ctx context.Context, pipeline any, opts ...*options.ChangeStreamOptions) (iter.Seq[ChangeStream], error) {
-	datas, err := obj.table.Watch(pre_ctx, pipeline, opts...)
+type WatchOption struct {
+	Oid             Timestamp
+	DisShowDocument bool
+	BatchSize       int32
+	OperationTypes  []OperationType
+}
+
+func (obj *Table) Watch(pre_ctx context.Context, opts ...WatchOption) (iter.Seq[ChangeStream], error) {
+	changeStreamOptions := []*options.ChangeStreamOptions{}
+	pipeline := []map[string]any{}
+	if len(opts) > 0 {
+		changeStreamOptions = append(changeStreamOptions, &options.ChangeStreamOptions{})
+		if !opts[0].Oid.IsZero() {
+			changeStreamOptions[0].StartAtOperationTime = &opts[0].Oid
+		}
+		changeStreamOptions[0].BatchSize = &opts[0].BatchSize
+		if len(opts[0].OperationTypes) > 0 {
+			ops := []map[string]string{}
+			for _, op := range opts[0].OperationTypes {
+				ops = append(ops, map[string]string{"operationType": string(op)})
+			}
+			pipeline = append(pipeline, map[string]any{
+				"$match": map[string]any{
+					"$or": ops,
+				},
+			})
+		}
+		if opts[0].DisShowDocument {
+			pipeline = append(pipeline, map[string]any{
+				"$project": map[string]any{
+					"_id":           1,
+					"clusterTime":   1,
+					"documentKey":   1,
+					"operationType": 1,
+				},
+			})
+		}
+	}
+	datas, err := obj.table.Watch(pre_ctx, pipeline, changeStreamOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -835,6 +872,7 @@ type ChangeStreamOption struct {
 	Oid    Timestamp //起始id
 	// Show      map[string]any //展示的字段
 	// Filter    map[string]any //查询参数
+	OperationTypes  []OperationType
 	DisShowDocument bool
 	BatchSize       int32 //服务器每批次多少
 	Debug           bool  //是否开启debug
@@ -877,23 +915,6 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	if err != nil {
 		return nil
 	}
-	var option options.ChangeStreamOptions
-	if !clearOption.Oid.IsZero() {
-		option.StartAtOperationTime = &clearOption.Oid
-	}
-	option.BatchSize = &clearOption.BatchSize
-	pipeline := []map[string]any{}
-
-	if clearOption.DisShowDocument {
-		pipeline = append(pipeline, map[string]any{
-			"$project": map[string]any{
-				"_id":           1,
-				"clusterTime":   1,
-				"documentKey":   1,
-				"operationType": 1,
-			},
-		})
-	}
 	var cur int64
 	var lastOid Timestamp
 	taskMap := kinds.NewSet[ObjectID]()
@@ -928,7 +949,12 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			afterTime.Stop()
 		}
 	}()
-	datas, err := obj.Watch(pre_ctx, pipeline, &option)
+	datas, err := obj.Watch(pre_ctx, WatchOption{
+		OperationTypes:  clearOption.OperationTypes,
+		Oid:             clearOption.Oid,
+		DisShowDocument: clearOption.DisShowDocument,
+		BatchSize:       clearOption.BatchSize,
+	})
 	if err != nil {
 		return err
 	}
