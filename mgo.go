@@ -783,7 +783,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			tmId = data["_id"].(ObjectID)
 			tempDatas = append(tempDatas, data)
 			if len(tempDatas) >= int(clearOption.ClearBatchSize) {
-				_, err := pool.Write(&thread.Task{
+				_, err := pool.Write(nil, &thread.Task{
 					Func: Func,
 					Args: []any{tempDatas, tmId},
 				})
@@ -794,7 +794,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 		}
 		if tempDatasLen := len(tempDatas); tempDatasLen > 0 {
-			if _, err := pool.Write(&thread.Task{
+			if _, err := pool.Write(nil, &thread.Task{
 				Func: Func,
 				Args: []any{tempDatas, tmId},
 			}); err != nil {
@@ -804,7 +804,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	} else {
 		for data := range datas.Range(pre_ctx) {
 			tmId = data["_id"].(ObjectID)
-			_, err := pool.Write(&thread.Task{
+			_, err := pool.Write(nil, &thread.Task{
 				Func: Func,
 				Args: []any{data, tmId},
 			})
@@ -980,7 +980,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			case <-afterTime.C:
 			}
 		}
-		_, err := pool.Write(&thread.Task{
+		_, err := pool.Write(nil, &thread.Task{
 			Func: Func, Args: []any{data, data.ObjectID, data.Timestamp},
 		})
 		if err != nil {
