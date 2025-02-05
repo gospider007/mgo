@@ -489,6 +489,10 @@ func (obj *Table) Update(pre_ctx context.Context, filter any, update any, values
 	result.MatchedCount = res.MatchedCount
 	result.ModifiedCount = res.ModifiedCount
 	result.UpsertedCount = res.UpsertedCount
+	result.Exists = res.MatchedCount > 0
+	if res.UpsertedID != nil {
+		result.UpsertedID = res.UpsertedID.(primitive.ObjectID)
+	}
 	return result, err
 }
 
@@ -511,6 +515,10 @@ func (obj *Table) Updates(pre_ctx context.Context, filter any, update any, value
 	result.MatchedCount = res.MatchedCount
 	result.ModifiedCount = res.ModifiedCount
 	result.UpsertedCount = res.UpsertedCount
+	result.Exists = res.MatchedCount > 0
+	if res.UpsertedID != nil {
+		result.UpsertedID = res.UpsertedID.(primitive.ObjectID)
+	}
 	return result, err
 }
 
