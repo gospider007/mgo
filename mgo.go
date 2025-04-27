@@ -180,6 +180,9 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 		if err != nil {
 			return nil, err
 		}
+		if host == "" {
+			host = addr
+		}
 		val, ok := obj.hostMap[host]
 		if ok {
 			addr = val + ":" + port
