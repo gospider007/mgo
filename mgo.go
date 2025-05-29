@@ -44,6 +44,7 @@ type ClientOption struct {
 	Pwd         string
 	Direct      bool
 	HostMap     map[string]string
+	Compressors []string
 	Socks5Proxy string
 }
 type FindsData struct {
@@ -207,11 +208,15 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 	if opt.Addr == "" {
 		opt.Addr = ":27017"
 	}
+	if len(opt.Compressors) == 0 {
+		opt.Compressors = []string{"zstd", "Zlib", "snappy"}
+	}
 	uri := fmt.Sprintf("mongodb://%s", opt.Addr)
 	clientOption := &options.ClientOptions{
 		BSONOptions: &options.BSONOptions{
 			UseJSONStructTags: true,
 		},
+		Compressors: opt.Compressors,
 	}
 	clientOption.ApplyURI(uri)
 	if opt.Usr != "" && opt.Pwd != "" {
