@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/gospider007/bar v0.0.0-20250217074946-47896d8de2ba
 	github.com/gospider007/gson v0.0.0-20250228010755-7240291925de
+	github.com/gospider007/gtls v0.0.0-20250427082859-097a9e35c601
 	github.com/gospider007/kinds v0.0.0-20250217075226-10f199f7215d
 	github.com/gospider007/requests v0.0.0-20250107100420-955b0c967c3b
 	github.com/gospider007/thread v0.0.0-20250122022252-529316516836
@@ -26,6 +27,7 @@ require (
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/gaukas/clienthellod v0.4.2 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
@@ -36,7 +38,6 @@ require (
 	github.com/gospider007/blog v0.0.0-20250302134054-8afc12c2a9a7 // indirect
 	github.com/gospider007/bs4 v0.0.0-20250413121342-fed910fb00c9 // indirect
 	github.com/gospider007/chanx v0.0.0-20241120015105-e88179cbbddb // indirect
-	github.com/gospider007/gtls v0.0.0-20250427082859-097a9e35c601 // indirect
 	github.com/gospider007/http2 v0.0.0-20250427082905-4aed0707e580 // indirect
 	github.com/gospider007/http3 v0.0.0-20250416085920-b642f3f91f47 // indirect
 	github.com/gospider007/ja3 v0.0.0-20250427082442-f7dc5fb959e6 // indirect

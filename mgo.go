@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"iter"
 	"net"
-	"net/url"
 	"time"
 
 	"github.com/gospider007/bar"
 	"github.com/gospider007/gson"
+	"github.com/gospider007/gtls"
 	"github.com/gospider007/kinds"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/thread"
@@ -172,7 +172,7 @@ func (obj *FindsData) Bytes() []byte {
 type mgoDialer struct {
 	dialer  *requests.Dialer
 	hostMap map[string]string
-	proxy   *url.URL
+	proxy   *requests.Address
 }
 
 func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr string) (net.Conn, error) {
@@ -194,11 +194,7 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 		return nil, err
 	}
 	if obj.proxy != nil {
-		proxyAddress, err := requests.GetAddressWithUrl(obj.proxy)
-		if err != nil {
-			return nil, err
-		}
-		return obj.dialer.Socks5TcpProxy(requests.NewResponse(ctx, requests.RequestOption{}), proxyAddress, address)
+		return obj.dialer.Socks5TcpProxy(requests.NewResponse(ctx, requests.RequestOption{}), *obj.proxy, address)
 	}
 	return obj.dialer.DialContext(requests.NewResponse(ctx, requests.RequestOption{}), network, address)
 }
@@ -228,14 +224,18 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
 	mgoDialer.dialer = &requests.Dialer{}
 	if opt.Socks5Proxy != "" {
-		socks5, err := url.Parse(opt.Socks5Proxy)
+		socks5, err := gtls.VerifyProxy(opt.Socks5Proxy)
 		if err != nil {
 			return nil, err
 		}
-		if socks5.Scheme != "socks5" {
+		proxyAddress, err := requests.GetAddressWithUrl(socks5)
+		if err != nil {
+			return nil, err
+		}
+		if proxyAddress.Scheme != "socks5" {
 			return nil, fmt.Errorf("invalid socks5 proxy url: %s", opt.Socks5Proxy)
 		}
-		mgoDialer.proxy = socks5
+		mgoDialer.proxy = &proxyAddress
 	}
 	clientOption.SetDialer(mgoDialer)
 	clientOption.SetDirect(opt.Direct)
@@ -251,8 +251,9 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 }
 
 type Db struct {
-	db   *mongo.Database
-	name string
+	db     *mongo.Database
+	name   string
+	client *Client
 }
 
 // 集合
@@ -261,11 +262,12 @@ type Table struct {
 	table  *mongo.Collection
 	dbName string
 	name   string
+	client *Client
 }
 
 // 创建新的集合
 func (obj *Client) NewDb(dbName string) *Db {
-	return &Db{db: obj.client.Database(dbName), name: dbName}
+	return &Db{db: obj.client.Database(dbName), name: dbName, client: obj}
 }
 
 func (obj *Client) Close(ctx context.Context) error {
@@ -290,10 +292,22 @@ type CreateTableOption struct {
 }
 
 func (obj *Db) NewTable(tableName string) *Table {
-	return &Table{db: obj, table: obj.db.Collection(tableName), dbName: obj.name, name: tableName}
+	return &Table{client: obj.client, db: obj, table: obj.db.Collection(tableName), dbName: obj.name, name: tableName}
 }
 func (obj *Db) Tables(ctx context.Context) ([]string, error) {
 	return obj.db.ListCollectionNames(ctx, map[string]string{})
+}
+func (obj *Db) RunCommand(ctx context.Context, cmd any) (map[string]any, error) {
+	data := obj.db.RunCommand(ctx, cmd)
+	if data.Err() != nil {
+		return nil, data.Err()
+	}
+	result := map[string]any{}
+	err := data.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // 创建新的集合
@@ -927,6 +941,38 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			clearOption.Oid = syncData.Map()["oid"].(Timestamp)
 		}
 	}
+	// if !clearOption.Oid.IsZero() {
+	// 	// if opDatas, err2 := obj.Finds(pre_ctx, nil, FindOption{Show: map[string]any{"_id": 1}, Sort: map[string]any{"_id": 1}, Limit: 1}); err2 == nil {
+	// 	// 	for opData := range opDatas.Range(pre_ctx) {
+	// 	// 		log.Print(clearOption.Oid)
+	// 	// 		log.Print(uint32(opData["_id"].(ObjectID).Timestamp().Unix()))
+	// 	// 		if t := uint32(opData["_id"].(ObjectID).Timestamp().Unix()) - 60; clearOption.Oid.T < t {
+	// 	// 			clearOption.Oid.T = t
+	// 	// 			clearOption.Oid.I = 0
+	// 	// 		}
+	// 	// 		break
+	// 	// 	}
+	// 	// }
+	// 	// getReplicationInfo, err := obj.client.NewDb("local").RunCommand(pre_ctx, map[string]any{
+	// 	// 	"getReplicationInfo": 1,
+	// 	// })
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// 	// log.Print(getReplicationInfo)
+	// 	// if opDatas, err2 := obj.client.NewTable("local", "oplog.rs").Finds(pre_ctx, nil, FindOption{Show: map[string]any{"ts": 1}, Sort: map[string]any{"ts": 1}, Limit: 1}); err2 == nil {
+	// 	// 	for opData := range opDatas.Range(pre_ctx) {
+
+	// 	// 		// log.Print(uint32(opData["_id"].(ObjectID).Timestamp().Unix()))
+	// 	// 		// if t := uint32(opData["_id"].(ObjectID).Timestamp().Unix()) - 60; clearOption.Oid.T < t {
+	// 	// 		// 	clearOption.Oid.T = t
+	// 	// 		// 	clearOption.Oid.I = 0
+	// 	// 		// }
+	// 	// 		break
+	// 	// 	}
+	// 	// }
+	// }
+
 	_, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
 	if err != nil {
 		return nil
@@ -965,6 +1011,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			afterTime.Stop()
 		}
 	}()
+
 	datas, err := obj.Watch(pre_ctx, WatchOption{
 		OperationTypes:  clearOption.OperationTypes,
 		Oid:             clearOption.Oid,
