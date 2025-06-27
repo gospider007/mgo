@@ -25,7 +25,8 @@ var ErrNoDocuments = mongo.ErrNoDocuments
 
 // mongodb 的操作========================================================================== start
 type Client struct {
-	client *mongo.Client
+	client       *mongo.Client
+	clientOption *options.ClientOptions
 }
 
 type FindOption struct {
@@ -247,7 +248,10 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{client}, client.Ping(ctx, readpref.Primary())
+	return &Client{client: client, clientOption: clientOption}, client.Ping(ctx, readpref.Primary())
+}
+func (obj *Client) Uri() string {
+	return obj.clientOption.GetURI()
 }
 
 type Db struct {
