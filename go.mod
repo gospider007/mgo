@@ -7,9 +7,9 @@ require (
 	github.com/gospider007/gson v0.0.0-20250611163241-fa021e9c5531
 	github.com/gospider007/gtls v0.0.0-20250610060422-446e017b9858
 	github.com/gospider007/kinds v0.0.0-20250217075226-10f199f7215d
-	github.com/gospider007/requests v0.0.0-20250626122208-ee6347312a35
+	github.com/gospider007/requests v0.0.0-20250630063445-aec0c7aa2512
 	github.com/gospider007/thread v0.0.0-20250327035213-c4ae3dc8660a
-	github.com/gospider007/tools v0.0.0-20250623092633-4c8b251d2f4a
+	github.com/gospider007/tools v0.0.0-20250627013901-3925ccd90381
 	go.mongodb.org/mongo-driver v1.17.4
 )
 
@@ -33,13 +33,13 @@ require (
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
-	github.com/google/pprof v0.0.0-20250607225305-033d6d78b36a // indirect
+	github.com/google/pprof v0.0.0-20250629210550-e611ec304b22 // indirect
 	github.com/gospider007/blog v0.0.0-20250302134054-8afc12c2a9a7 // indirect
 	github.com/gospider007/bs4 v0.0.0-20250413121342-fed910fb00c9 // indirect
 	github.com/gospider007/chanx v0.0.0-20250217075041-cc1fbcea9c92 // indirect
 	github.com/gospider007/http2 v0.0.0-20250616085600-a49f075f841e // indirect
 	github.com/gospider007/http3 v0.0.0-20250625134649-90c214b46d1c // indirect
-	github.com/gospider007/ja3 v0.0.0-20250626122029-44a230c1d67e // indirect
+	github.com/gospider007/ja3 v0.0.0-20250627013834-1d2966014638 // indirect
 	github.com/gospider007/re v0.0.0-20250217075352-bcb79f285d6c // indirect
 	github.com/gospider007/websocket v0.0.0-20250429035144-b1cf6819063a // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.53.0 // indirect
 	github.com/refraction-networking/uquic v0.0.6 // indirect
-	github.com/refraction-networking/utls v1.7.3 // indirect
+	github.com/refraction-networking/utls v1.7.4-0.20250621163342-5abccec539e6 // indirect
 	github.com/sorairolake/lzip-go v0.3.7 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
@@ -89,6 +89,7 @@ require (
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	gopkg.in/errgo.v2 v2.1.0 // indirect
 )
