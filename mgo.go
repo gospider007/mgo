@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iter"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/gospider007/bar"
@@ -621,14 +622,13 @@ type WatchOption struct {
 }
 
 func (obj *Table) Watch(pre_ctx context.Context, opts ...WatchOption) (iter.Seq[ChangeStream], error) {
-	changeStreamOptions := []*options.ChangeStreamOptions{}
+	changeStreamOption := new(options.ChangeStreamOptions)
 	pipeline := []map[string]any{}
 	if len(opts) > 0 {
-		changeStreamOptions = append(changeStreamOptions, &options.ChangeStreamOptions{})
 		if !opts[0].Oid.IsZero() {
-			changeStreamOptions[0].StartAtOperationTime = &opts[0].Oid
+			changeStreamOption.StartAtOperationTime = &opts[0].Oid
 		}
-		changeStreamOptions[0].BatchSize = &opts[0].BatchSize
+		changeStreamOption.BatchSize = &opts[0].BatchSize
 		if len(opts[0].OperationTypes) > 0 {
 			ops := []map[string]string{}
 			for _, op := range opts[0].OperationTypes {
@@ -651,9 +651,25 @@ func (obj *Table) Watch(pre_ctx context.Context, opts ...WatchOption) (iter.Seq[
 			})
 		}
 	}
-	datas, err := obj.table.Watch(pre_ctx, pipeline, changeStreamOptions...)
+	datas, err := obj.table.Watch(pre_ctx, pipeline, changeStreamOption)
 	if err != nil {
-		return nil, err
+		if strings.Contains(err.Error(), "Resume of change stream was not possible, as the resume point may no longer be in the oplog") {
+			data, ferr := obj.client.NewTable("local", "oplog.rs").Find(pre_ctx, nil, FindOption{
+				Sort: map[string]any{"$natural": 1},
+				Show: map[string]any{"ts": 1},
+			})
+			if data == nil || ferr != nil {
+				return nil, ferr
+			}
+			ts := data.Map()["ts"].(primitive.Timestamp)
+			changeStreamOption.StartAtOperationTime = &ts
+			datas, err = obj.table.Watch(pre_ctx, pipeline, changeStreamOption)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 	return func(yield func(ChangeStream) bool) {
 		defer datas.Close(pre_ctx)
