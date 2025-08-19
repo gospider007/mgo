@@ -7,7 +7,7 @@ require (
 	github.com/gospider007/gson v0.0.0-20250815030832-fa016f03a353
 	github.com/gospider007/gtls v0.0.0-20250818100212-f466fa4cc860
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
-	github.com/gospider007/requests v0.0.0-20250818134656-e75d44e5ddeb
+	github.com/gospider007/requests v0.0.0-20250819020850-d941aad1a256
 	github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23
 	github.com/gospider007/tools v0.0.0-20250815031258-8a81d680917c
 	go.mongodb.org/mongo-driver v1.17.4
@@ -91,5 +91,6 @@ require (
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/errgo.v2 v2.1.0 // indirect
 )
