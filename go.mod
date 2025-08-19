@@ -3,17 +3,18 @@ module github.com/gospider007/mgo
 go 1.25
 
 require (
-	github.com/gospider007/bar v0.0.0-20250217074946-47896d8de2ba
-	github.com/gospider007/gson v0.0.0-20250718004537-ff15820964bd
-	github.com/gospider007/gtls v0.0.0-20250718003831-90cdeb97a23f
-	github.com/gospider007/kinds v0.0.0-20250217075226-10f199f7215d
-	github.com/gospider007/requests v0.0.0-20250718091032-bd77e8a316b9
-	github.com/gospider007/thread v0.0.0-20250327035213-c4ae3dc8660a
-	github.com/gospider007/tools v0.0.0-20250718003809-7c62cd0ee920
+	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf
+	github.com/gospider007/gson v0.0.0-20250815030832-fa016f03a353
+	github.com/gospider007/gtls v0.0.0-20250818100212-f466fa4cc860
+	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
+	github.com/gospider007/requests v0.0.0-20250818134656-e75d44e5ddeb
+	github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23
+	github.com/gospider007/tools v0.0.0-20250815031258-8a81d680917c
 	go.mongodb.org/mongo-driver v1.17.4
 )
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
@@ -33,15 +34,15 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
-	github.com/gospider007/blog v0.0.0-20250302134054-8afc12c2a9a7 // indirect
-	github.com/gospider007/bs4 v0.0.0-20250413121342-fed910fb00c9 // indirect
-	github.com/gospider007/chanx v0.0.0-20250217075041-cc1fbcea9c92 // indirect
-	github.com/gospider007/http1 v0.0.0-20250718091014-9ea72dfb1370 // indirect
-	github.com/gospider007/http2 v0.0.0-20250718004700-7af5b064e352 // indirect
-	github.com/gospider007/http3 v0.0.0-20250718004757-02ceb5fa2d6e // indirect
-	github.com/gospider007/ja3 v0.0.0-20250724085013-aa7e0a527d6c // indirect
-	github.com/gospider007/re v0.0.0-20250217075352-bcb79f285d6c // indirect
-	github.com/gospider007/websocket v0.0.0-20250718010025-4c017acfd478 // indirect
+	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab // indirect
+	github.com/gospider007/bs4 v0.0.0-20250815030800-a352d3ad57ee // indirect
+	github.com/gospider007/chanx v0.0.0-20250815031005-1e20b624bbcb // indirect
+	github.com/gospider007/http1 v0.0.0-20250817122009-0b953c2c8efa // indirect
+	github.com/gospider007/http2 v0.0.0-20250817122534-76043412544d // indirect
+	github.com/gospider007/http3 v0.0.0-20250817123336-07d66db6dbb3 // indirect
+	github.com/gospider007/ja3 v0.0.0-20250815031055-0948dc3bbe0b // indirect
+	github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf // indirect
+	github.com/gospider007/websocket v0.0.0-20250815031315-cde1470d5ace // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -57,8 +58,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/nwaples/rardecode/v2 v2.1.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.23.4 // indirect
-	github.com/onsi/gomega v1.37.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.24.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.54.0 // indirect
@@ -77,13 +77,13 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
-	go.uber.org/mock v0.5.2 // indirect
+	go.uber.org/mock v0.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/exp v0.0.0-20250811191247-51f88131bc50 // indirect
+	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6 // indirect
 	golang.org/x/image v0.30.0 // indirect
 	golang.org/x/mod v0.27.0 // indirect
 	golang.org/x/net v0.43.0 // indirect

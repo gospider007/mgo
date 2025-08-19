@@ -198,7 +198,8 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 	if obj.proxy != nil {
 		return obj.dialer.Socks5TcpProxy(requests.NewResponse(ctx, requests.RequestOption{}), *obj.proxy, address)
 	}
-	return obj.dialer.DialContext(requests.NewResponse(ctx, requests.RequestOption{}), network, address)
+	_, conn, err := obj.dialer.DialProxyContext(requests.NewResponse(ctx, requests.RequestOption{}), network, nil, address)
+	return conn, err
 }
 
 // 新建客户端
