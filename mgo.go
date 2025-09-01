@@ -784,7 +784,11 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	if err != nil {
 		return err
 	}
-	_, err = obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": clearOption.Oid})
+	var updateOid = func(oid ObjectID, cur int64) error {
+		_, updateErr := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": oid, curTitle: cur})
+		return updateErr
+	}
+	err = updateOid(clearOption.Oid, barCur)
 	if err != nil {
 		return nil
 	}
@@ -819,7 +823,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 			lastOid = result[0].(ObjectID)
 			if saveN%clearOption.Thread == 0 {
-				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": lastOid, curTitle: barCur}); err != nil {
+				if err := updateOid(lastOid, barCur); err != nil {
 					return err
 				}
 			}
@@ -871,7 +875,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 		if lastOid.Hex() == clearOption.Oid.Hex() {
 			barCur = barTotal
 		}
-		if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]any{"oid": lastOid, curTitle: barCur}); err != nil {
+		if err := updateOid(lastOid, barCur); err != nil {
 			return err
 		}
 	}
@@ -962,39 +966,11 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			clearOption.Oid = syncData.Map()["oid"].(Timestamp)
 		}
 	}
-	// if !clearOption.Oid.IsZero() {
-	// 	// if opDatas, err2 := obj.Finds(pre_ctx, nil, FindOption{Show: map[string]any{"_id": 1}, Sort: map[string]any{"_id": 1}, Limit: 1}); err2 == nil {
-	// 	// 	for opData := range opDatas.Range(pre_ctx) {
-	// 	// 		log.Print(clearOption.Oid)
-	// 	// 		log.Print(uint32(opData["_id"].(ObjectID).Timestamp().Unix()))
-	// 	// 		if t := uint32(opData["_id"].(ObjectID).Timestamp().Unix()) - 60; clearOption.Oid.T < t {
-	// 	// 			clearOption.Oid.T = t
-	// 	// 			clearOption.Oid.I = 0
-	// 	// 		}
-	// 	// 		break
-	// 	// 	}
-	// 	// }
-	// 	// getReplicationInfo, err := obj.client.NewDb("local").RunCommand(pre_ctx, map[string]any{
-	// 	// 	"getReplicationInfo": 1,
-	// 	// })
-	// 	// if err != nil {
-	// 	// 	return err
-	// 	// }
-	// 	// log.Print(getReplicationInfo)
-	// 	// if opDatas, err2 := obj.client.NewTable("local", "oplog.rs").Finds(pre_ctx, nil, FindOption{Show: map[string]any{"ts": 1}, Sort: map[string]any{"ts": 1}, Limit: 1}); err2 == nil {
-	// 	// 	for opData := range opDatas.Range(pre_ctx) {
-
-	// 	// 		// log.Print(uint32(opData["_id"].(ObjectID).Timestamp().Unix()))
-	// 	// 		// if t := uint32(opData["_id"].(ObjectID).Timestamp().Unix()) - 60; clearOption.Oid.T < t {
-	// 	// 		// 	clearOption.Oid.T = t
-	// 	// 		// 	clearOption.Oid.I = 0
-	// 	// 		// }
-	// 	// 		break
-	// 	// 	}
-	// 	// }
-	// }
-
-	_, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": clearOption.Oid})
+	var updateOid = func(oid Timestamp) error {
+		_, updateErr := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": oid})
+		return updateErr
+	}
+	err := updateOid(clearOption.Oid)
 	if err != nil {
 		return nil
 	}
@@ -1018,7 +994,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			taskMap.Del(result[0].(ObjectID))
 			lastOid = result[1].(Timestamp)
 			if cur%int64(clearOption.Thread) == 0 {
-				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
+				if err := updateOid(lastOid); err != nil {
 					return nil
 				}
 			}
@@ -1026,13 +1002,18 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 		},
 	})
 	defer pool.Close()
-	var afterTime *time.Timer
-	defer func() {
-		if afterTime != nil {
-			afterTime.Stop()
+	go func() {
+		for {
+			select {
+			case <-pool.Done():
+				return
+			case <-time.After(time.Second * 10):
+				if !lastOid.IsZero() {
+					updateOid(lastOid)
+				}
+			}
 		}
 	}()
-
 	datas, err := obj.Watch(pre_ctx, WatchOption{
 		OperationTypes:  clearOption.OperationTypes,
 		Oid:             clearOption.Oid,
@@ -1044,24 +1025,13 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	}
 	for data := range datas {
 		if data.ObjectID.IsZero() {
-			cur++
-			if cur%(int64(clearOption.Thread)*10) == 0 {
-				if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
-					return nil
-				}
-			}
 			continue
 		}
 		for taskMap.Has(data.ObjectID) {
-			if afterTime == nil {
-				afterTime = time.NewTimer(time.Second)
-			} else {
-				afterTime.Reset(time.Second)
-			}
 			select {
 			case <-pool.Done():
 				return pool.Err()
-			case <-afterTime.C:
+			case <-time.After(time.Second):
 			}
 		}
 		_, err := pool.Write(nil, &thread.Task{
@@ -1075,7 +1045,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 		return err
 	}
 	if !lastOid.IsZero() {
-		if _, err := obj.NewTable("TempSyncData").Upsert(pre_ctx, syncFilter, map[string]Timestamp{"oid": lastOid}); err != nil {
+		if err := updateOid(lastOid); err != nil {
 			return err
 		}
 	}
