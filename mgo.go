@@ -208,7 +208,7 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		opt.Addr = ":27017"
 	}
 	if len(opt.Compressors) == 0 {
-		opt.Compressors = []string{"zstd", "Zlib", "snappy"}
+		opt.Compressors = []string{"zstd", "zlib", "snappy"}
 	}
 	uri := fmt.Sprintf("mongodb://%s", opt.Addr)
 	clientOption := &options.ClientOptions{

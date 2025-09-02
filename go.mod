@@ -9,7 +9,7 @@ require (
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
 	github.com/gospider007/requests v0.0.0-20250826020603-f9a3dd1bd670
 	github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23
-	github.com/gospider007/tools v0.0.0-20250820090327-734cf60271ec
+	github.com/gospider007/tools v0.0.0-20250901071517-fba8244dde6c
 	go.mongodb.org/mongo-driver v1.17.4
 )
 

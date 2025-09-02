@@ -131,8 +131,8 @@ github.com/gospider007/requests v0.0.0-20250826020603-f9a3dd1bd670 h1:QfkQR1f/Pr
 github.com/gospider007/requests v0.0.0-20250826020603-f9a3dd1bd670/go.mod h1:1D5Ow9GnVJLeohAzxiJ7EkfB/xvmHAoVtbckxokRUmg=
 github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23 h1:vhbfaMOisCqK4GkRs+Vv7GzKKPmmJ6DfrpUzTDGzCRs=
 github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23/go.mod h1:Z6lIuNYjtyylwIsIQ97JkKjiOHzWqfLbPpLH3Oh3XQU=
-github.com/gospider007/tools v0.0.0-20250820090327-734cf60271ec h1:mAZOEIJ9X9LQmH1GNhkVHEVHSZysnR0wHHpnJ9JGTiM=
-github.com/gospider007/tools v0.0.0-20250820090327-734cf60271ec/go.mod h1:oDjcjXaKqctjovjRI8G7uRbU4Eve/4sj/7YxiXuM7Qo=
+github.com/gospider007/tools v0.0.0-20250901071517-fba8244dde6c h1:9AQ35ANEtCRjFzGC67YD9syUMldfthSoLd3dxz8q17w=
+github.com/gospider007/tools v0.0.0-20250901071517-fba8244dde6c/go.mod h1:nnc3ikl4zAq7ORR3KHD4A3HKdD6y+vnFt8B1WPVfwak=
 github.com/gospider007/websocket v0.0.0-20250819094917-c00c0a99815f h1:nyklmiKQ1vLOmC2DCPL8/RZHN22or/CFRi0xCGTiZiU=
 github.com/gospider007/websocket v0.0.0-20250819094917-c00c0a99815f/go.mod h1:olruUjPKXJ74OlFipbKedfK0LMuDu/UarSWIVhEtOX4=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
