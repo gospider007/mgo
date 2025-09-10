@@ -12,7 +12,7 @@ import (
 	"github.com/gospider007/gson"
 	"github.com/gospider007/gtls"
 	"github.com/gospider007/kinds"
-	"github.com/gospider007/requests"
+	"github.com/gospider007/netx"
 	"github.com/gospider007/thread"
 	"github.com/gospider007/tools"
 
@@ -172,9 +172,9 @@ func (obj *FindsData) Bytes() []byte {
 }
 
 type mgoDialer struct {
-	dialer  *requests.Dialer
+	dialer  *netx.Dialer
 	hostMap map[string]string
-	proxy   *requests.Address
+	proxy   *netx.Address
 }
 
 func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr string) (net.Conn, error) {
@@ -191,14 +191,14 @@ func (obj *mgoDialer) DialContext(ctx context.Context, network string, addr stri
 			addr = val + ":" + port
 		}
 	}
-	address, err := requests.GetAddressWithAddr(addr)
+	address, err := netx.GetAddressWithAddr(addr)
 	if err != nil {
 		return nil, err
 	}
 	if obj.proxy != nil {
-		return obj.dialer.Socks5TcpProxy(requests.NewResponse(ctx, requests.RequestOption{}), *obj.proxy, address)
+		return obj.dialer.Socks5TcpProxy((&netx.DialOption{}).NewContext(ctx, false), *obj.proxy, address)
 	}
-	_, conn, err := obj.dialer.DialProxyContext(requests.NewResponse(ctx, requests.RequestOption{}), network, nil, address)
+	_, conn, err := obj.dialer.DialProxyContext((&netx.DialOption{}).NewContext(ctx, false), network, nil, address)
 	return conn, err
 }
 
@@ -225,13 +225,13 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 		})
 	}
 	mgoDialer := &mgoDialer{hostMap: opt.HostMap}
-	mgoDialer.dialer = &requests.Dialer{}
+	mgoDialer.dialer = &netx.Dialer{}
 	if opt.Socks5Proxy != "" {
 		socks5, err := gtls.VerifyProxy(opt.Socks5Proxy)
 		if err != nil {
 			return nil, err
 		}
-		proxyAddress, err := requests.GetAddressWithUrl(socks5)
+		proxyAddress, err := netx.GetAddressWithUrl(socks5)
 		if err != nil {
 			return nil, err
 		}
