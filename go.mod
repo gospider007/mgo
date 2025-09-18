@@ -26,7 +26,7 @@ require (
 	github.com/google/pprof v0.0.0-20250903194437-c28834ac2320 // indirect
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab // indirect
 	github.com/gospider007/chanx v0.0.0-20250815031005-1e20b624bbcb // indirect
-	github.com/gospider007/http1 v0.0.0-20250915113818-d37c975a4755 // indirect
+	github.com/gospider007/http1 v0.0.0-20250918091602-ed1078858f13 // indirect
 	github.com/gospider007/ja3 v0.0.0-20250908031106-827812269efe // indirect
 	github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
