@@ -4,12 +4,12 @@ go 1.25.0
 
 require (
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf
-	github.com/gospider007/gson v0.0.0-20250923093120-5ae8a0e86b11
-	github.com/gospider007/gtls v0.0.0-20250929093316-a1397152be0a
+	github.com/gospider007/gson v0.0.0-20251010080832-ae2473600a8b
+	github.com/gospider007/gtls v0.0.0-20251010080835-5de0a5aebc43
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
-	github.com/gospider007/netx v0.0.0-20250929093528-9ff586a942f1
+	github.com/gospider007/netx v0.0.0-20251010080833-72de6ed8d752
 	github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23
-	github.com/gospider007/tools v0.0.0-20250923093005-512399316eb4
+	github.com/gospider007/tools v0.0.0-20251010080832-0e5c6b21df2d
 	go.mongodb.org/mongo-driver v1.17.4
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/google/pprof v0.0.0-20251007162407-5df77e3f7d1d // indirect
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab // indirect
 	github.com/gospider007/chanx v0.0.0-20250815031005-1e20b624bbcb // indirect
-	github.com/gospider007/http1 v0.0.0-20250929093301-5054253c6b0c // indirect
+	github.com/gospider007/http1 v0.0.0-20251010080853-880db86caa57 // indirect
 	github.com/gospider007/ja3 v0.0.0-20250908031106-827812269efe // indirect
 	github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -42,7 +42,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.26.0 // indirect
 	github.com/refraction-networking/uquic v0.0.6 // indirect
 	github.com/refraction-networking/utls v1.8.0 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
@@ -65,7 +64,5 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
-	golang.org/x/time v0.13.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
 )
