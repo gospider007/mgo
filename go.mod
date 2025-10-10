@@ -4,10 +4,10 @@ go 1.25.0
 
 require (
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf
-	github.com/gospider007/gson v0.0.0-20251010080832-ae2473600a8b
-	github.com/gospider007/gtls v0.0.0-20251010080835-5de0a5aebc43
+	github.com/gospider007/gson v0.0.0-20251010080854-7673cfe49eb5
+	github.com/gospider007/gtls v0.0.0-20251010080853-12699b045240
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
-	github.com/gospider007/netx v0.0.0-20251010080833-72de6ed8d752
+	github.com/gospider007/netx v0.0.0-20251010080905-7d0924240269
 	github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23
 	github.com/gospider007/tools v0.0.0-20251010080832-0e5c6b21df2d
 	go.mongodb.org/mongo-driver v1.17.4
