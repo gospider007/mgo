@@ -627,6 +627,16 @@ func (obj *Table) Watch(pre_ctx context.Context, opts ...WatchOption) (iter.Seq[
 	if len(opts) > 0 {
 		if !opts[0].Oid.IsZero() {
 			changeStreamOption.StartAtOperationTime = &opts[0].Oid
+			firstData, err := obj.Find(pre_ctx, nil, FindOption{Sort: map[string]any{"_id": 1}, Show: map[string]any{"_id": 1}})
+			if err != nil {
+				return nil, err
+			}
+			streamT := time.Unix(int64(changeStreamOption.StartAtOperationTime.T), int64(changeStreamOption.StartAtOperationTime.I)) // T 是秒级时间戳
+			if firstData != nil {
+				if firstT := firstData.Map()["_id"].(ObjectID).Timestamp().Local(); firstT.After(streamT) {
+					changeStreamOption.StartAtOperationTime = &primitive.Timestamp{T: uint32(firstT.Unix())}
+				}
+			}
 		}
 		changeStreamOption.BatchSize = &opts[0].BatchSize
 		if len(opts[0].OperationTypes) > 0 {
