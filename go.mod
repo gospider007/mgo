@@ -29,7 +29,7 @@ require (
 	github.com/gospider007/http1 v0.0.0-20251011074703-a8d2e5a53aa0 // indirect
 	github.com/gospider007/http2 v0.0.0-20251011074750-9f56e348ffb9 // indirect
 	github.com/gospider007/http3 v0.0.0-20251015142250-876e4baf5c98 // indirect
-	github.com/gospider007/ja3 v0.0.0-20250908031106-827812269efe // indirect
+	github.com/gospider007/ja3 v0.0.0-20251015142731-b71ee7d288fb // indirect
 	github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
