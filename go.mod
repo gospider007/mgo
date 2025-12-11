@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf
-	github.com/gospider007/gson v0.0.0-20251209060118-1e943dfdc4ff
+	github.com/gospider007/gson v0.0.0-20251211084510-ba906b2318d6
 	github.com/gospider007/gtls v0.0.0-20251210003351-d6a332efe3d9
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
 	github.com/gospider007/netx v0.0.0-20251210145323-b978e3f0b531
