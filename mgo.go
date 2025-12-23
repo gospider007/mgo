@@ -1043,7 +1043,7 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 			case <-time.After(time.Second):
 			}
 		}
-		_, err := pool.Write(nil, &thread.Task{
+		_, err := pool.Write(context.TODO(), &thread.Task{
 			Func: Func, Args: []any{data, data.ObjectID, data.Timestamp},
 		})
 		if err != nil {
