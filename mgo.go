@@ -815,15 +815,9 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	pool := thread.NewClient(pre_ctx, clearOption.Thread, thread.ClientOption{
 		Debug: clearOption.Debug,
 		TaskDoneCallBack: func(t *thread.Task) error {
-			if t.Error() != nil {
-				return t.Error()
-			}
-			result, err := t.Result()
+			result, err := t.Result(1)
 			if err != nil {
 				return err
-			}
-			if result[1] != nil {
-				return result[1].(error)
 			}
 			barCur += bsN
 			saveN++
@@ -990,15 +984,9 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 		Debug: clearOption.Debug,
 		TaskDoneCallBack: func(t *thread.Task) error {
 			cur++
-			if t.Error() != nil {
-				return t.Error()
-			}
-			result, err := t.Result()
+			result, err := t.Result(2)
 			if err != nil {
 				return err
-			}
-			if result[2] != nil {
-				return result[2].(error)
 			}
 			taskMap.Del(result[0].(ObjectID))
 			lastOid = result[1].(Timestamp)
