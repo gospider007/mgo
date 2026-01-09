@@ -5,9 +5,9 @@ go 1.25.0
 require (
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf
 	github.com/gospider007/gson v0.0.0-20260108062328-278520589b2b
-	github.com/gospider007/gtls v0.0.0-20260108062405-3286ba96f909
+	github.com/gospider007/gtls v0.0.0-20260109055201-29aa59607870
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
-	github.com/gospider007/netx v0.0.0-20260108062502-d6ffdf621007
+	github.com/gospider007/netx v0.0.0-20260109055200-f5f74ea9cdb4
 	github.com/gospider007/thread v0.0.0-20260108062958-a2299a4cfb1f
 	github.com/gospider007/tools v0.0.0-20260108062122-babc2c2f0542
 	go.mongodb.org/mongo-driver v1.17.6
@@ -28,9 +28,9 @@ require (
 	github.com/gospider007/chanx v0.0.0-20250815031005-1e20b624bbcb // indirect
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117 // indirect
 	github.com/gospider007/http1 v0.0.0-20260108062327-be1c0f86305f // indirect
-	github.com/gospider007/http2 v0.0.0-20260108062407-71f1b92287e7 // indirect
-	github.com/gospider007/http3 v0.0.0-20260108062406-fc903dc4143e // indirect
-	github.com/gospider007/ja3 v0.0.0-20260108062327-21ae5930c6d0 // indirect
+	github.com/gospider007/http2 v0.0.0-20260109055201-e74089af8ca8 // indirect
+	github.com/gospider007/http3 v0.0.0-20260109055201-8386990aa346 // indirect
+	github.com/gospider007/ja3 v0.0.0-20260109055200-5c9094422cc0 // indirect
 	github.com/gospider007/re v0.0.0-20251212071142-f56bce921150 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect
