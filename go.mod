@@ -8,7 +8,7 @@ require (
 	github.com/gospider007/gtls v0.0.0-20260108062405-3286ba96f909
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c
 	github.com/gospider007/netx v0.0.0-20260108062502-d6ffdf621007
-	github.com/gospider007/thread v0.0.0-20250818134503-cc00ca28bc23
+	github.com/gospider007/thread v0.0.0-20260108062958-a2299a4cfb1f
 	github.com/gospider007/tools v0.0.0-20260108062122-babc2c2f0542
 	go.mongodb.org/mongo-driver v1.17.6
 )
@@ -43,7 +43,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.27.3 // indirect
+	github.com/onsi/ginkgo/v2 v2.27.4 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.58.0 // indirect
 	github.com/refraction-networking/uquic v0.0.6 // indirect
@@ -67,7 +67,7 @@ require (
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
 )
