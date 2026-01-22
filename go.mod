@@ -10,7 +10,7 @@ require (
 	github.com/gospider007/netx v0.0.0-20260120074920-bea3e6be220a
 	github.com/gospider007/thread v0.0.0-20260108062958-a2299a4cfb1f
 	github.com/gospider007/tools v0.0.0-20260120074453-dbd9d4748c8a
-	go.mongodb.org/mongo-driver v1.17.6
+	go.mongodb.org/mongo-driver v1.17.7
 )
 
 require (
@@ -37,7 +37,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mholt/acmez/v3 v3.1.4 // indirect
-	github.com/miekg/dns v1.1.70 // indirect
+	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mileusna/useragent v1.3.5 // indirect
 	github.com/minio/minlz v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
