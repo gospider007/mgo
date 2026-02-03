@@ -2,8 +2,11 @@ package mgo
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"iter"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -710,6 +713,25 @@ type ClearOption struct {
 	QueueCacheSize int            //队列缓存大小
 }
 
+func ObjectIDFromHexWithTime(poid ObjectID, d time.Duration) ObjectID {
+	if poid.IsZero() {
+		log.Panic("objectId bug")
+	}
+	var oid [12]byte
+	_, err := hex.Decode(oid[:], []byte(poid.Hex()))
+	if err != nil {
+		log.Panic(err)
+	}
+	binary.BigEndian.PutUint32(oid[0:4], uint32(poid.Timestamp().Add(d).Unix()))
+	rid, err := ObjectIDFromHex(hex.EncodeToString(oid[:]))
+	if err != nil {
+		log.Panic(err)
+	}
+	log.Print("befor: ", poid.Timestamp().Local())
+	log.Print("after: ", rid.Timestamp().Local())
+	return rid
+}
+
 // 清洗集合数据
 func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clearOption ClearOption) error {
 	if preCtx == nil {
@@ -776,13 +798,24 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 		lgte = "$lte"
 		lgteInt = -1
 	}
+	jtT := time.Second * 60
+	idFilter := map[string]ObjectID{}
 	if !clearOption.Oid.IsZero() {
-		clearOption.Filter["_id"] = map[string]ObjectID{lgte: clearOption.Oid}
+		if lgteInt == 1 {
+			clearOption.Oid = ObjectIDFromHexWithTime(clearOption.Oid, -jtT)
+		} else {
+			clearOption.Oid = ObjectIDFromHexWithTime(clearOption.Oid, jtT)
+		}
+		idFilter[lgte] = clearOption.Oid
 	}
-
+	if lgteInt == 1 {
+		idFilter["$lte"] = ObjectIDFromHexWithTime(NewObjectID(), -jtT)
+	}
+	if len(idFilter) > 0 {
+		clearOption.Filter["_id"] = idFilter
+	}
 	var datas *FindsData
 	var err error
-
 	datas, err = obj.Finds(pre_ctx, clearOption.Filter, FindOption{Sort: map[string]any{"_id": lgteInt}, Show: clearOption.Show})
 	if err != nil {
 		return err
