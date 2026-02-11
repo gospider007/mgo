@@ -1,6 +1,6 @@
 module github.com/gospider007/mgo
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf
@@ -25,7 +25,7 @@ require (
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20260202012954-cb029daf43ef // indirect
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab // indirect
-	github.com/gospider007/chanx v0.0.0-20250815031005-1e20b624bbcb // indirect
+	github.com/gospider007/chanx v0.0.0-20260211054348-1dfd65a36494 // indirect
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117 // indirect
 	github.com/gospider007/http1 v0.0.0-20260211034938-2dec34631d08 // indirect
 	github.com/gospider007/http2 v0.0.0-20260211035012-edae91c95908 // indirect
