@@ -1033,11 +1033,15 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	})
 	defer pool.Close()
 	go func() {
+		interval := time.Second * 10
+		timer := time.NewTimer(interval)
+		defer timer.Stop()
 		for {
+			timer.Reset(interval)
 			select {
 			case <-pool.Done():
 				return
-			case <-time.After(time.Second * 10):
+			case <-timer.C:
 				if !lastOid.IsZero() {
 					updateOid(lastOid)
 				}
@@ -1053,15 +1057,19 @@ func (obj *Table) ClearChangeStream(preCctx context.Context, Func func(context.C
 	if err != nil {
 		return err
 	}
+	interval := time.Second * 10
+	timer := time.NewTimer(interval)
+	defer timer.Stop()
 	for data := range datas {
 		if data.ObjectID.IsZero() {
 			continue
 		}
 		for taskMap.Has(data.ObjectID) {
+			timer.Reset(interval)
 			select {
 			case <-pool.Done():
 				return pool.Err()
-			case <-time.After(time.Second):
+			case <-timer.C:
 			}
 		}
 		_, err := pool.Write(context.TODO(), &thread.Task{
