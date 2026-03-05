@@ -28,8 +28,8 @@ require (
 	github.com/gospider007/chanx v0.0.0-20260211054348-1dfd65a36494 // indirect
 	github.com/gospider007/conf v0.0.0-20260304014953-1bc774a8226f // indirect
 	github.com/gospider007/http1 v0.0.0-20260305073746-9700fdc09414 // indirect
-	github.com/gospider007/http2 v0.0.0-20260304015043-8b2cf3eb7c80 // indirect
-	github.com/gospider007/http3 v0.0.0-20260304015040-0bd8aa9a1483 // indirect
+	github.com/gospider007/http2 v0.0.0-20260305074427-16b3cbf55c3f // indirect
+	github.com/gospider007/http3 v0.0.0-20260305074428-d0773a358a22 // indirect
 	github.com/gospider007/ja3 v0.0.0-20260304014955-6843df4d7e08 // indirect
 	github.com/gospider007/re v0.0.0-20260227072205-6223d82a3dab // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
