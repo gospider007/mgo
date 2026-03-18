@@ -7,7 +7,7 @@ require (
 	github.com/gospider007/gson v0.0.0-20260312032453-c0586fa3915c
 	github.com/gospider007/gtls v0.0.0-20260318014708-180dc2d336c0
 	github.com/gospider007/kinds v0.0.0-20260211060834-06a10e2431d8
-	github.com/gospider007/netx v0.0.0-20260318014709-9d3d4ff1873f
+	github.com/gospider007/netx v0.0.0-20260318014810-5965ee791978
 	github.com/gospider007/thread v0.0.0-20260227072212-5a85c55f9cb3
 	github.com/gospider007/tools v0.0.0-20260312032233-dcd42802e7e0
 	go.mongodb.org/mongo-driver v1.17.9
