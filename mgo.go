@@ -19,10 +19,10 @@ import (
 	"github.com/gospider007/thread"
 	"github.com/gospider007/tools"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
 var ErrNoDocuments = mongo.ErrNoDocuments
@@ -43,6 +43,75 @@ type FindOption struct {
 	Sort            map[string]any // 一个文件，指定返回文件的顺序
 	Await           bool           //oplog 是否阻塞等待数据
 }
+
+func buildUpdate() *options.UpdateManyOptionsBuilder {
+	mongo_op := options.UpdateMany()
+	mongo_op.SetUpsert(true)
+	return mongo_op
+}
+func buildUpdateOne() *options.UpdateOneOptionsBuilder {
+	mongo_op := options.UpdateOne()
+	mongo_op.SetUpsert(true)
+	return mongo_op
+}
+func (opt FindOption) BuildCount() *options.CountOptionsBuilder {
+	mongo_op := options.Count()
+	if opt.Limit != 0 {
+		mongo_op.SetLimit(opt.Limit)
+	}
+	if opt.Skip != 0 {
+		mongo_op.SetSkip(opt.Skip)
+	}
+	return mongo_op
+}
+func (opt FindOption) DocumentCount() *options.EstimatedDocumentCountOptionsBuilder {
+	mongo_op := options.EstimatedDocumentCount()
+	return mongo_op
+}
+func (opt FindOption) BuildFindOne() *options.FindOneOptionsBuilder {
+	mongo_op := options.FindOne()
+	if opt.Show != nil {
+		mongo_op.SetProjection(opt.Show)
+	}
+	if opt.Skip != 0 {
+		mongo_op.SetSkip(opt.Skip)
+	}
+	if opt.Sort != nil {
+		mongo_op.SetSort(opt.Sort)
+	}
+	return mongo_op
+}
+func (opt FindOption) BuildFind() *options.FindOptionsBuilder {
+	mongo_op := options.Find()
+	if opt.Show != nil {
+		mongo_op.SetProjection(opt.Show)
+	}
+	if opt.Skip != 0 {
+		mongo_op.SetSkip(opt.Skip)
+	}
+	if opt.Sort != nil {
+		mongo_op.SetSort(opt.Sort)
+	}
+	if opt.NoCursorTimeout {
+		mongo_op.SetNoCursorTimeout(opt.NoCursorTimeout)
+	}
+	if opt.Await {
+		mongo_op.SetCursorType(options.TailableAwait)
+	}
+	if opt.Limit != 0 {
+		mongo_op.SetLimit(opt.Limit)
+	}
+	if opt.BatchSize <= 0 {
+		mongo_op.SetBatchSize(100)
+	} else {
+		mongo_op.SetBatchSize(opt.BatchSize)
+	}
+	if opt.Timeout != 0 {
+		mongo_op.SetMaxAwaitTime(opt.Timeout)
+	}
+	return mongo_op
+}
+
 type ClientOption struct {
 	Addr        string
 	Usr         string
@@ -55,11 +124,12 @@ type ClientOption struct {
 type FindsData struct {
 	cursor  *mongo.Cursor
 	filter  any
-	mongoOp *options.FindOptions
+	mongoOp FindOption
 	object  *mongo.Collection
 	raw     map[string]any
 	rawOk   bool
 }
+
 type FindData struct {
 	object *mongo.SingleResult
 	raw    map[string]any
@@ -68,13 +138,13 @@ type UpateResult struct {
 	MatchedCount  int64 // 匹配的个数
 	ModifiedCount int64 // 文档变更的数量,不包括增加
 	UpsertedCount int64 // upsert的数量
-	UpsertedID    primitive.ObjectID
+	UpsertedID    bson.ObjectID
 	Exists        bool //是否存在
 }
-type ObjectID = primitive.ObjectID
-type Timestamp = primitive.Timestamp            //{T uint32   I uint32}
-var ObjectIDFromHex = primitive.ObjectIDFromHex //十六进制字符串转objectId
-var NewObjectID = primitive.NewObjectID         //创建一个新的objectid
+type ObjectID = bson.ObjectID
+type Timestamp = bson.Timestamp            //{T uint32   I uint32}
+var ObjectIDFromHex = bson.ObjectIDFromHex //十六进制字符串转objectId
+var NewObjectID = bson.NewObjectID         //创建一个新的objectid
 
 func (obj *FindData) Map() map[string]any {
 	if obj.raw == nil {
@@ -111,7 +181,7 @@ func (obj *FindData) Bytes() []byte {
 
 // 重试
 func (obj *FindsData) ReTry(ctx context.Context) error {
-	rs, err := obj.object.Find(ctx, obj.filter, obj.mongoOp)
+	rs, err := obj.object.Find(ctx, obj.filter, obj.mongoOp.BuildFind())
 	if err != nil {
 		return err
 	} else {
@@ -248,7 +318,7 @@ func NewClient(ctx context.Context, opt ClientOption) (*Client, error) {
 	clientOption.SetRetryReads(true)
 	clientOption.SetRetryWrites(true)
 
-	client, err := mongo.Connect(ctx, clientOption)
+	client, err := mongo.Connect(clientOption)
 	if err != nil {
 		return nil, err
 	}
@@ -355,17 +425,7 @@ func (obj *Table) Find(pre_ctx context.Context, filter any, opts ...FindOption) 
 	if filter == nil {
 		filter = map[string]string{}
 	}
-	mongo_op := options.FindOneOptions{
-		Projection:      opt.Show,
-		Skip:            &opt.Skip,
-		Sort:            opt.Sort,
-		NoCursorTimeout: &opt.NoCursorTimeout,
-	}
-	if opt.Timeout != 0 {
-		tot := opt.Timeout
-		mongo_op.MaxTime = &tot
-	}
-	rs := obj.table.FindOne(pre_ctx, filter, &mongo_op)
+	rs := obj.table.FindOne(pre_ctx, filter, opt.BuildFindOne())
 	if rs.Err() == ErrNoDocuments {
 		return nil, nil
 	}
@@ -398,31 +458,8 @@ func (obj *Table) Finds(pre_ctx context.Context, filter any, opts ...FindOption)
 	if filter == nil {
 		filter = map[string]string{}
 	}
-	if opt.BatchSize <= 0 {
-		opt.BatchSize = 100
-	}
-	mongo_op := options.FindOptions{
-		Projection:      opt.Show,
-		Skip:            &opt.Skip,
-		Sort:            opt.Sort,
-		NoCursorTimeout: &opt.NoCursorTimeout,
-	}
-	if opt.Await {
-		tailValue := options.TailableAwait
-		mongo_op.CursorType = &tailValue
-	}
-	if opt.Limit != 0 {
-		mongo_op.Limit = &opt.Limit
-	}
-	if opt.BatchSize != 0 {
-		mongo_op.BatchSize = &opt.BatchSize
-	}
-	if opt.Timeout != 0 {
-		tot := opt.Timeout
-		mongo_op.MaxTime = &tot
-	}
-	rs, err := obj.table.Find(pre_ctx, filter, &mongo_op)
-	return &FindsData{cursor: rs, filter: filter, mongoOp: &mongo_op, object: obj.table}, err
+	rs, err := obj.table.Find(pre_ctx, filter, opt.BuildFind())
+	return &FindsData{cursor: rs, filter: filter, mongoOp: opt, object: obj.table}, err
 }
 
 // 集合数量
@@ -432,41 +469,25 @@ func (obj *Table) Count(pre_ctx context.Context, filter any, opts ...FindOption)
 		opt = opts[0]
 	}
 	if filter == nil {
-		mongo_op := options.EstimatedDocumentCountOptions{}
-		if opt.Timeout != 0 {
-			tot := opt.Timeout
-			mongo_op.MaxTime = &tot
-		}
-		return obj.table.EstimatedDocumentCount(pre_ctx, &mongo_op)
+		return obj.table.EstimatedDocumentCount(pre_ctx, opt.DocumentCount())
 	}
-	mongo_op := options.CountOptions{}
-	if opt.Timeout != 0 {
-		tot := opt.Timeout
-		mongo_op.MaxTime = &tot
-	}
-	if opt.Limit != 0 {
-		mongo_op.Limit = &opt.Limit
-	}
-	if opt.Skip != 0 {
-		mongo_op.Skip = &opt.Skip
-	}
-	return obj.table.CountDocuments(pre_ctx, filter, &mongo_op)
+	return obj.table.CountDocuments(pre_ctx, filter, opt.BuildCount())
 }
 
 // 添加文档
-func (obj *Table) Add(pre_ctx context.Context, document any) (primitive.ObjectID, error) {
-	var rs_id primitive.ObjectID
+func (obj *Table) Add(pre_ctx context.Context, document any) (bson.ObjectID, error) {
+	var rs_id bson.ObjectID
 	res, err := obj.table.InsertOne(pre_ctx, document)
 	if err != nil {
 		return rs_id, err
 	}
-	rs_id = res.InsertedID.(primitive.ObjectID)
+	rs_id = res.InsertedID.(bson.ObjectID)
 	return rs_id, err
 }
 
 // 添加一批文档
-func (obj *Table) Adds(pre_ctx context.Context, document ...any) ([]primitive.ObjectID, error) {
-	rs_ids := []primitive.ObjectID{}
+func (obj *Table) Adds(pre_ctx context.Context, document ...any) ([]bson.ObjectID, error) {
+	rs_ids := []bson.ObjectID{}
 	document_len := len(document)
 	if document_len == 0 {
 		return rs_ids, nil
@@ -476,7 +497,7 @@ func (obj *Table) Adds(pre_ctx context.Context, document ...any) ([]primitive.Ob
 		return rs_ids, err
 	}
 	for _, insert_id := range res.InsertedIDs {
-		rs_ids = append(rs_ids, insert_id.(primitive.ObjectID))
+		rs_ids = append(rs_ids, insert_id.(bson.ObjectID))
 	}
 	return rs_ids, err
 }
@@ -521,7 +542,7 @@ func (obj *Table) Update(pre_ctx context.Context, filter any, update any, values
 	result.UpsertedCount = res.UpsertedCount
 	result.Exists = res.MatchedCount > 0
 	if res.UpsertedID != nil {
-		result.UpsertedID = res.UpsertedID.(primitive.ObjectID)
+		result.UpsertedID = res.UpsertedID.(bson.ObjectID)
 	}
 	return result, err
 }
@@ -547,7 +568,7 @@ func (obj *Table) Updates(pre_ctx context.Context, filter any, update any, value
 	result.UpsertedCount = res.UpsertedCount
 	result.Exists = res.MatchedCount > 0
 	if res.UpsertedID != nil {
-		result.UpsertedID = res.UpsertedID.(primitive.ObjectID)
+		result.UpsertedID = res.UpsertedID.(bson.ObjectID)
 	}
 	return result, err
 }
@@ -567,9 +588,7 @@ func (obj *Table) Upsert(pre_ctx context.Context, filter any, update any, values
 			updateData[kk] = vv
 		}
 	}
-
-	c := true
-	res, err := obj.table.UpdateOne(pre_ctx, filter, updateData, &options.UpdateOptions{Upsert: &c})
+	res, err := obj.table.UpdateOne(pre_ctx, filter, updateData, buildUpdateOne())
 	if err != nil {
 		return result, err
 	}
@@ -577,7 +596,7 @@ func (obj *Table) Upsert(pre_ctx context.Context, filter any, update any, values
 	result.ModifiedCount = res.ModifiedCount
 	result.UpsertedCount = res.UpsertedCount
 	if res.UpsertedID != nil {
-		result.UpsertedID = res.UpsertedID.(primitive.ObjectID)
+		result.UpsertedID = res.UpsertedID.(bson.ObjectID)
 	}
 	if result.MatchedCount > 0 {
 		result.Exists = true
@@ -600,8 +619,7 @@ func (obj *Table) Upserts(pre_ctx context.Context, filter any, update any, value
 			updateData[kk] = vv
 		}
 	}
-	c := true
-	res, err := obj.table.UpdateMany(pre_ctx, filter, updateData, &options.UpdateOptions{Upsert: &c})
+	res, err := obj.table.UpdateMany(pre_ctx, filter, updateData, buildUpdate())
 	if err != nil {
 		return result, err
 	}
@@ -609,7 +627,7 @@ func (obj *Table) Upserts(pre_ctx context.Context, filter any, update any, value
 	result.ModifiedCount = res.ModifiedCount
 	result.UpsertedCount = res.UpsertedCount
 	if res.UpsertedID != nil {
-		result.UpsertedID = res.UpsertedID.(primitive.ObjectID)
+		result.UpsertedID = res.UpsertedID.(bson.ObjectID)
 	}
 	if result.MatchedCount > 0 {
 		result.Exists = true
@@ -625,23 +643,24 @@ type WatchOption struct {
 }
 
 func (obj *Table) Watch(pre_ctx context.Context, opts ...WatchOption) (iter.Seq[ChangeStream], error) {
-	changeStreamOption := new(options.ChangeStreamOptions)
+	changeStreamOption := options.ChangeStream()
 	pipeline := []map[string]any{}
 	if len(opts) > 0 {
 		if !opts[0].Oid.IsZero() {
-			changeStreamOption.StartAtOperationTime = &opts[0].Oid
+			changeStreamOption.SetStartAtOperationTime(&opts[0].Oid)
 			firstData, err := obj.Find(pre_ctx, nil, FindOption{Sort: map[string]any{"_id": 1}, Show: map[string]any{"_id": 1}})
 			if err != nil {
 				return nil, err
 			}
-			streamT := time.Unix(int64(changeStreamOption.StartAtOperationTime.T), int64(changeStreamOption.StartAtOperationTime.I)) // T 是秒级时间戳
+
+			streamT := time.Unix(int64(opts[0].Oid.T), int64(opts[0].Oid.I)) // T 是秒级时间戳
 			if firstData != nil {
 				if firstT := firstData.Map()["_id"].(ObjectID).Timestamp().Local(); firstT.After(streamT) {
-					changeStreamOption.StartAtOperationTime = &primitive.Timestamp{T: uint32(firstT.Unix())}
+					changeStreamOption.SetStartAtOperationTime(&bson.Timestamp{T: uint32(firstT.Unix())})
 				}
 			}
 		}
-		changeStreamOption.BatchSize = &opts[0].BatchSize
+		changeStreamOption.SetBatchSize(opts[0].BatchSize)
 		if len(opts[0].OperationTypes) > 0 {
 			ops := []map[string]string{}
 			for _, op := range opts[0].OperationTypes {
@@ -674,8 +693,8 @@ func (obj *Table) Watch(pre_ctx context.Context, opts ...WatchOption) (iter.Seq[
 			if data == nil || ferr != nil {
 				return nil, ferr
 			}
-			ts := data.Map()["ts"].(primitive.Timestamp)
-			changeStreamOption.StartAtOperationTime = &ts
+			ts := data.Map()["ts"].(bson.Timestamp)
+			changeStreamOption.SetStartAtOperationTime(&ts)
 			datas, err = obj.table.Watch(pre_ctx, pipeline, changeStreamOption)
 			if err != nil {
 				return nil, err
@@ -874,7 +893,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			tmId = data["_id"].(ObjectID)
 			tempDatas = append(tempDatas, data)
 			if len(tempDatas) >= int(clearOption.ClearBatchSize) {
-				_, err := pool.Write(nil, &thread.Task{
+				_, err := pool.Write(context.TODO(), &thread.Task{
 					Func: Func,
 					Args: []any{tempDatas, tmId},
 				})
@@ -885,7 +904,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 			}
 		}
 		if tempDatasLen := len(tempDatas); tempDatasLen > 0 {
-			if _, err := pool.Write(nil, &thread.Task{
+			if _, err := pool.Write(context.TODO(), &thread.Task{
 				Func: Func,
 				Args: []any{tempDatas, tmId},
 			}); err != nil {
@@ -895,7 +914,7 @@ func (obj *Table) clearTable(preCtx context.Context, Func any, tag string, clear
 	} else {
 		for data := range datas.Range(pre_ctx) {
 			tmId = data["_id"].(ObjectID)
-			_, err := pool.Write(nil, &thread.Task{
+			_, err := pool.Write(context.TODO(), &thread.Task{
 				Func: Func,
 				Args: []any{data, tmId},
 			})
