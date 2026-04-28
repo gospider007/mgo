@@ -3,13 +3,13 @@ module github.com/gospider007/mgo
 go 1.26.0
 
 require (
-	github.com/gospider007/bar v0.0.0-20260211061016-83e11c93b20c
-	github.com/gospider007/gson v0.0.0-20260413012738-f5f8d4b074a9
-	github.com/gospider007/gtls v0.0.0-20260427071445-7301c7253e03
+	github.com/gospider007/bar v0.0.0-20260428065025-2d41d2627a24
+	github.com/gospider007/gson v0.0.0-20260428065035-d6488b654ef8
+	github.com/gospider007/gtls v0.0.0-20260428065043-0bf3ee73053f
 	github.com/gospider007/kinds v0.0.0-20260211060834-06a10e2431d8
-	github.com/gospider007/netx v0.0.0-20260427071542-d98626e57197
+	github.com/gospider007/netx v0.0.0-20260428065043-6ef5eac4b7f4
 	github.com/gospider007/thread v0.0.0-20260227072212-5a85c55f9cb3
-	github.com/gospider007/tools v0.0.0-20260413012604-fb962abed9fb
+	github.com/gospider007/tools v0.0.0-20260428065035-959b2c088295
 	go.mongodb.org/mongo-driver/v2 v2.6.0
 )
 
@@ -26,11 +26,11 @@ require (
 	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/gospider007/blog v0.0.0-20260428065025-f3c72a6a8a13 // indirect
 	github.com/gospider007/chanx v0.0.0-20260211054348-1dfd65a36494 // indirect
-	github.com/gospider007/conf v0.0.0-20260413012735-bb0241823799 // indirect
-	github.com/gospider007/http1 v0.0.0-20260413012738-2f024bc332f6 // indirect
-	github.com/gospider007/http2 v0.0.0-20260427071445-04e39eb2ab48 // indirect
-	github.com/gospider007/http3 v0.0.0-20260427071407-5e08d3ac6b65 // indirect
-	github.com/gospider007/ja3 v0.0.0-20260427071407-e0e8b5c4a04a // indirect
+	github.com/gospider007/conf v0.0.0-20260428065030-f830f0808dd3 // indirect
+	github.com/gospider007/http1 v0.0.0-20260428065035-d1add401a3c9 // indirect
+	github.com/gospider007/http2 v0.0.0-20260428065044-e4e55fddc627 // indirect
+	github.com/gospider007/http3 v0.0.0-20260428065043-2e0486d0d7ce // indirect
+	github.com/gospider007/ja3 v0.0.0-20260428065044-bdf6b1fb47f4 // indirect
 	github.com/gospider007/re v0.0.0-20260227072205-6223d82a3dab // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
