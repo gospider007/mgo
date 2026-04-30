@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/gospider007/bar v0.0.0-20260428065104-305d919b2224
-	github.com/gospider007/gson v0.0.0-20260429083118-91e95ae1154e
+	github.com/gospider007/gson v0.0.0-20260430060055-03b651e7e519
 	github.com/gospider007/gtls v0.0.0-20260429094808-8e8ec755267a
 	github.com/gospider007/kinds v0.0.0-20260211060834-06a10e2431d8
 	github.com/gospider007/netx v0.0.0-20260429094926-003d53688301
@@ -57,7 +57,6 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
-	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
