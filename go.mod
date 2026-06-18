@@ -10,7 +10,7 @@ require (
 	github.com/gospider007/netx v0.0.0-20260615055712-8dbf3167e9cd
 	github.com/gospider007/thread v0.0.0-20260227072212-5a85c55f9cb3
 	github.com/gospider007/tools v0.0.0-20260612054000-7cbe6eb3212d
-	go.mongodb.org/mongo-driver/v2 v2.6.1
+	go.mongodb.org/mongo-driver/v2 v2.7.0
 )
 
 require (
