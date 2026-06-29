@@ -746,8 +746,6 @@ func ObjectIDFromHexWithTime(poid ObjectID, d time.Duration) ObjectID {
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Print("befor: ", poid.Timestamp().Local())
-	log.Print("after: ", rid.Timestamp().Local())
 	return rid
 }
 
