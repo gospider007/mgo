@@ -4,12 +4,12 @@ go 1.26.0
 
 require (
 	github.com/gospider007/bar v0.0.0-20260428065104-305d919b2224
-	github.com/gospider007/gson v0.0.0-20260708150835-bf0405eb2c91
-	github.com/gospider007/gtls v0.0.0-20260708150959-0fc6f90451ff
+	github.com/gospider007/gson v0.0.0-20260709025734-25eb879e791e
+	github.com/gospider007/gtls v0.0.0-20260709025749-5dbb6e2743f7
 	github.com/gospider007/kinds v0.0.0-20260211060834-06a10e2431d8
-	github.com/gospider007/netx v0.0.0-20260708151100-bf961ca54e53
+	github.com/gospider007/netx v0.0.0-20260709025749-95573909c862
 	github.com/gospider007/thread v0.0.0-20260227072212-5a85c55f9cb3
-	github.com/gospider007/tools v0.0.0-20260708150649-46c42ee5f3f7
+	github.com/gospider007/tools v0.0.0-20260709025734-e176d9ab209e
 	go.mongodb.org/mongo-driver/v2 v2.7.0
 )
 
@@ -26,11 +26,11 @@ require (
 	github.com/google/pprof v0.0.0-20260604005048-7023385849c0 // indirect
 	github.com/gospider007/blog v0.0.0-20260428065025-f3c72a6a8a13 // indirect
 	github.com/gospider007/chanx v0.0.0-20260211054348-1dfd65a36494 // indirect
-	github.com/gospider007/conf v0.0.0-20260708150831-0e01d9a06f9a // indirect
-	github.com/gospider007/http1 v0.0.0-20260708150836-7a9f76857c61 // indirect
-	github.com/gospider007/http2 v0.0.0-20260708150959-a284327ee753 // indirect
-	github.com/gospider007/http3 v0.0.0-20260708150959-74b9080d5a15 // indirect
-	github.com/gospider007/ja3 v0.0.0-20260708150837-c5766abbbc68 // indirect
+	github.com/gospider007/conf v0.0.0-20260709025732-6bdd0bd7e789 // indirect
+	github.com/gospider007/http1 v0.0.0-20260709025734-147c72863ea2 // indirect
+	github.com/gospider007/http2 v0.0.0-20260709025753-4e408ab3c8f6 // indirect
+	github.com/gospider007/http3 v0.0.0-20260709025749-c150330eb8ef // indirect
+	github.com/gospider007/ja3 v0.0.0-20260709025751-b379201549fb // indirect
 	github.com/gospider007/re v0.0.0-20260227072205-6223d82a3dab // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -61,13 +61,13 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/exp v0.0.0-20260611194520-c48552f49976 // indirect
-	golang.org/x/image v0.43.0 // indirect
-	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/image v0.44.0 // indirect
+	golang.org/x/mod v0.38.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.39.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
 )
